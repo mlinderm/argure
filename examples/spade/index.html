@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<title> Argure Demo: SPADE </title>
+		<script src="../../spec/vendor/jquery-1.6.js"></script>
+		<script src="../../spec/vendor/jquery.tmpl.js"></script>
+		<script src="../../spec/vendor/knockout-1.2.1.debug.js"></script>
+		<script src="../../spec/vendor/underscore.js"></script>
+	</head>
+	<body>
+		<h1>
+			SPADE Command Synthesis
+		</h1>
+		<div id="spadeArgure">
+			<h3> Setup Spade Analysis </h3>
+			<form id="spadeMainArgs">
+				
+				<label for="slctdFiles">Select Files for Analysis:</label>
+				<select id="slctdFiles" data-bind="options: availFiles, optionsText: function(item) { return item.name; }, selectedOptions: slctdFiles" multiple="multiple"></select>
+				
+				<label for="clustParams">Select Clustering Parameters:</label>
+				<select id="clustParams" data-bind="options: availClustParams" multiple=multiple></select>
+
+				<h3> Panels </h3>
+				<ul data-bind='template: { name: "panelTemplate", foreach: panels }'>
+
+				</ul>
+			
+			</form>
+
+			<h3> Create New or Additional Panels </h3>
+			<form id="spadeCreatePanel" data-bind="submit: createPanel">
+				<label for="panelFiles">Select Panel Files:</label>
+				<select id="panelFiles" data-bind="options: availPanelFiles, optionsText: function(item) { return item.name; }, selectedOptions: slctdPanelFiles" multiple=multiple></select>
+				
+				<label for="panelRefFiles">Select Reference Files:</label>
+				<select id="panelRefFiles" data-bind="options: slctdPanelFiles, optionsText: function(item) { return item.name; }, selectedOptions: slctdPanelRefFiles, enable: enbldPanelRefFiles" multiple=multiple></select>
+
+				<label for="panelRefParams">Select Fold Change Parameters:</label>
+				<select id="panelRefParams" data-bind="options: availPanelFoldParams, selectedOptions: slctdPanelFoldParams, enable: enbldPanelFoldParams" multiple=multiple></select>
+
+				<button type="submit" data-bind="enable: validPanel">Create Panel</button>
+			</form>
+			
+			<!-- "view" for created panels -->
+			<script id="panelTemplate" type="text/html">
+				<li>
+					<p>
+					File()s: {{each $data.files}} ${$value}, {{/each}}
+					<br>
+					Median Markers: All
+					<br>
+					Reference File(s): {{each $data.refFiles}} ${$value}, {{/each}} 
+					<br>
+					Fold Change Parameter(s): {{each $data.fldParams}} ${$value}, {{/each}} 
+					</p>
+					<button data-bind="click: function() { spadeArgure_vm.panels.remove($data); }">Delete Panel</button>
+				</li>
+			</script>
+			
+			<script type="text/javascript">
+				// Example intializing data that might be returned from AJAX query					
+				var spadeFiles = jQuery.parseJSON('{ \
+					"files": [ \
+						{ "name": "tube1.fcs", "pN": ["cd3","cd4","cd8"] }, \
+						{ "name": "tube2.fcs", "pN": ["cd3","cd4","cd19"] } \
+					] \
+				}');
+
+				// Return the array of parameters (pN) commons to all files in argument array
+				function commonParams(files) {
+					return (files.length > 0) ? _.reduce(files.slice(1), function(m,p) { return _.intersect(m,p.pN); }, _.first(files).pN) : [];
+				}
+
+				// knockout.js view model
+				// In general select boxes use two observables -- avail* and slctd* -- corresponding
+				// options and selected options
+				var spadeArgure_vm = {
+					availFiles : ko.observableArray(spadeFiles['files']),
+					slctdFiles : ko.observableArray([]),
+					
+					panels : ko.observableArray([]),
+
+					slctdPanelFiles : ko.observableArray([]),
+					slctdPanelRefFiles : ko.observableArray([]),
+					slctdPanelFoldParams : ko.observableArray([]),
+
+					// Panels are plain objects with following fields. Not we remove the selected
+					// options from that observable as changes in options don't affect the
+					// selected options (this is a design choice by knockout.js)
+					createPanel : function() {
+						this.panels.push({
+							files: _.pluck(this.slctdPanelFiles.splice(0), 'name'),
+							refFiles: _.pluck(this.slctdPanelRefFiles.splice(0), 'name'),
+							fldParams: this.slctdPanelFoldParams.splice(0)	
+						});
+					},
+					removePanel : function(panel) {
+						this.panels.remove(panel);
+					}
+											
+				};
+
+				// Relations
+				// -----------------------
+
+				spadeArgure_vm.availClustParams = ko.dependentObservable(function() {
+						return commonParams(this.slctdFiles());
+				}, spadeArgure_vm);
+
+				// Panels must have mutually exclusive files, so substract files in created
+				// panels from files selected for analysis
+				spadeArgure_vm.availPanelFiles = ko.dependentObservable(function() {
+					var usedFiles = _.flatten(_.pluck(this.panels(), 'files'));
+					return _.reject(this.slctdFiles(), function(f) { return _.include(usedFiles, f.name); }); 
+				}, spadeArgure_vm);
+
+				spadeArgure_vm.availPanelFoldParams = ko.dependentObservable(function() {
+					return commonParams(this.slctdPanelFiles());
+				}, spadeArgure_vm);
+
+	
+				// Multiple files needed in panel to be able to compute fold change,
+				// and thus for reference files and fold change to be meaningful
+				spadeArgure_vm.enbldPanelRefFiles = ko.dependentObservable(function() {
+					return this.slctdPanelFiles().length > 1;
+				}, spadeArgure_vm);
+
+				spadeArgure_vm.enbldPanelFoldParams = ko.dependentObservable(function() {
+					return this.slctdPanelRefFiles().length > 0;
+				}, spadeArgure_vm);
+			
+				spadeArgure_vm.validPanel = ko.dependentObservable(function() {
+						return this.slctdPanelFiles().length > 0 &&
+						(this.slctdPanelRefFiles().length == 0 ||
+						 (this.slctdPanelRefFiles().length > 0 && this.slctdPanelFoldParams().length > 0));
+				}, spadeArgure_vm);
+
+				ko.applyBindings(spadeArgure_vm);
+			</script>
+		</div>
+	</body>
+</html>
