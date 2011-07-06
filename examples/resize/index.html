@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<title> Argure Demo: Image Resizing </title>
+		<script src="../../spec/vendor/jquery-1.6.js"></script>
+		<script src="../../spec/vendor/jquery.tmpl.js"></script>
+		<script src="../../spec/vendor/knockout-1.2.1.debug.js"></script>
+	</head>
+	<body>
+		<h1>
+		Resize Image	
+		</h1>
+		<div id="resizeArgure">
+			<form id="resize">
+
+				<p>Initial Height: <span data-bind="text: initialHeight"></span></p>
+				<p>Initial Width: <span data-bind="text: initialWidth"></span></p>
+
+				<label for="absHeight">Absolute Height</label>
+				<input type="text" id="absHeight" data-bind="value: absoluteHeight"/>
+				<br />
+				<label for="relHeight">Relative Height</label>
+				<input type="text" id="relHeight" data-bind="value: relativeHeight"/>
+				<br />
+				<label for="absWidth">Absolute Width</label>
+				<input type="text" id="absWidth" data-bind="value: absoluteWidth"/>
+				<br />
+				<label for="relWidth">Relative Width</label>
+				<input type="text" id="relWidth" data-bind="value: relativeWidth"/>
+				<br />
+				<label for="ratio">Lock Ratio</label>
+				<input type="checkbox" id="ratio" data-bind="checked: ratio"/>
+
+			</form>
+			
+						
+			<script type="text/javascript">
+				var viewModel = {
+					initialHeight : 1000,
+					initialWidth : 1000,
+					
+					_relativeHeight : ko.observable(100),
+					_relativeWidth : ko.observable(100),
+					_ratio : ko.observable(false),
+
+					currentPriority: 0,
+					currentHeightPriority: 0,
+					currentWidthPriority: 0
+				}
+
+				viewModel.relativeHeight = ko.dependentObservable({
+					read: function() {
+						return this._relativeHeight();
+					},
+					write: function(value) {
+						this.currentHeightPriority = ++this.currentPriority;
+						this._relativeHeight(value);
+						if (this.ratio()) {
+							this._relativeWidth(value);
+						}
+					},
+					owner: viewModel
+				});
+
+				viewModel.absoluteHeight = ko.dependentObservable({
+					read: function() {
+						return this.initialHeight * (this.relativeHeight() / 100);
+					},
+					write: function(value) {
+						this.relativeHeight((value / this.initialHeight) * 100);
+					},
+					owner: viewModel
+				});
+
+				viewModel.relativeWidth = ko.dependentObservable({
+					read: function() {
+						return this._relativeWidth();
+					},
+					write: function(value) {
+						this.currentWidthPriority = ++this.currentPriority;
+						this._relativeWidth(value);
+						if (this.ratio()) {
+							this._relativeHeight(value);
+						}
+					},
+					owner: viewModel
+				});
+			
+				viewModel.absoluteWidth = ko.dependentObservable({
+					read: function() {
+						return this.initialWidth * (this._relativeWidth() / 100);
+					},
+					write: function(value) {
+						this._relativeWidth((value / this.initialWidth) * 100);
+					},
+					owner: viewModel
+				});
+
+				viewModel.ratio = ko.dependentObservable({
+					read: function() {
+						return this._ratio();
+					},
+					write: function(value) {
+						this._ratio(value);
+						if (this.currentHeightPriority > this.currentWidthPriority) {
+							this.relativeWidth(this.relativeHeight());
+						} else {
+							this.relativeHeight(this.relativeWidth());
+						}
+					},
+					owner: viewModel
+				});
+
+				ko.applyBindings(viewModel);
+			</script>
+		</div>
+	</body>
+</html>
