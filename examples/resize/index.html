@@ -103,9 +103,9 @@
 					write: function(value) {
 						this._ratio(value);
 						if (this.currentHeightPriority > this.currentWidthPriority) {
-							this.relativeWidth(this.relativeHeight());
+							this._relativeWidth(this._relativeHeight());
 						} else {
-							this.relativeHeight(this.relativeWidth());
+							this._relativeHeight(this._relativeWidth());
 						}
 					},
 					owner: viewModel
