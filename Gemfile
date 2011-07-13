@@ -7,8 +7,11 @@ group :development do
 	if RbConfig::CONFIG['target_os'] =~ /darwin/i
 		gem 'rb-fsevent', '>= 0.4.0', :require => false
 	end
-	gem 'guard-coffeescript'
+	if RbConfig::CONFIG['target_os'] =~ /mswin|mingw/i
+		gem 'rb-fchange', '>= 0.0.2', :require => false
+	end
+	gem 'guard'
 
-	gem 'sprockets'
+	gem 'guard-coffeescript'
 	gem 'guard-sprockets'
 end
