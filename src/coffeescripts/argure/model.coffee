@@ -1,16 +1,32 @@
-class ModelHelper
-	constructor: (@callback) ->
-	build: (viewModel) ->
-		@callback.call(viewModel)
+class Model
+	constructor: ->
+		# Convert observables into corresponding knockout observables
+		for name, options of @.constructor.observables
+			do (name, options) =>  # Create closure around each observable's name and options
+				state = "_" + name
+				@[state] = ko.observable options.initial
+				@[name] = ko.dependentObservable
+					read: -> @[state]()
+					write: (value) -> @[state](value)
+					owner: @
+		# Create dependent observables for relations (this is a crude way to do this)
+		@methods = []
+		for constraints in @.constructor.relations
+			for name, method of constraints
+				do (name, method) =>
+					@methods.push ko.dependentObservable ->
+						@[name](method.call(this))
+					, @
 
-namespace 'Argure', (exports) ->
-	exports.ModelHelper = ModelHelper
+	@observe: (name, options=undefined) ->
+		@observables ?= {}
+		throw new Error("Observable #{name} already exists") if @observables[name]?
+		@observables[name] = options ? {}
 
-
-Model = (properties) ->
-	_ = {}
-	(_[name] = if (value instanceof ModelHelper) then value.build(_) else value) for name, value of properties if properties
-	_
+	@relate: (methods) ->
+		@relations ?= []
+		throw new Error("You must specify constraint methods") if !(methods instanceof Object)
+		@relations.push(methods)
 
 namespace 'Argure', (exports) ->
 	exports.Model = Model

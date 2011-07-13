@@ -15,30 +15,74 @@
 
 
 (function() {
-  var Model, ModelHelper;
-  ModelHelper = (function() {
-    function ModelHelper(callback) {
-      this.callback = callback;
-    }
-    ModelHelper.prototype.build = function(viewModel) {
-      return this.callback.call(viewModel);
-    };
-    return ModelHelper;
-  })();
-  namespace('Argure', function(exports) {
-    return exports.ModelHelper = ModelHelper;
-  });
-  Model = function(properties) {
-    var name, value, _;
-    _ = {};
-    if (properties) {
-      for (name in properties) {
-        value = properties[name];
-        _[name] = value instanceof ModelHelper ? value.build(_) : value;
+  var Model;
+  var __bind = function(fn, me){ return function(){ return fn.apply(me, arguments); }; };
+  Model = (function() {
+    function Model() {
+      var constraints, method, name, options, _fn, _fn2, _i, _len, _ref, _ref2;
+      _ref = this.constructor.observables;
+      _fn = __bind(function(name, options) {
+        var state;
+        state = "_" + name;
+        this[state] = ko.observable(options.initial);
+        return this[name] = ko.dependentObservable({
+          read: function() {
+            return this[state]();
+          },
+          write: function(value) {
+            return this[state](value);
+          },
+          owner: this
+        });
+      }, this);
+      for (name in _ref) {
+        options = _ref[name];
+        _fn(name, options);
+      }
+      this.methods = [];
+      _ref2 = this.constructor.relations;
+      for (_i = 0, _len = _ref2.length; _i < _len; _i++) {
+        constraints = _ref2[_i];
+        _fn2 = __bind(function(name, method) {
+          return this.methods.push(ko.dependentObservable(function() {
+            return this[name](method.call(this));
+          }, this));
+        }, this);
+        for (name in constraints) {
+          method = constraints[name];
+          _fn2(name, method);
+        }
       }
     }
-    return _;
-  };
+    Model.observe = function(name, options) {
+      var _ref;
+      if (options == null) {
+        options = void 0;
+      }
+            if ((_ref = this.observables) != null) {
+        _ref;
+      } else {
+        this.observables = {};
+      };
+      if (this.observables[name] != null) {
+        throw new Error("Observable " + name + " already exists");
+      }
+      return this.observables[name] = options != null ? options : {};
+    };
+    Model.relate = function(methods) {
+      var _ref;
+            if ((_ref = this.relations) != null) {
+        _ref;
+      } else {
+        this.relations = [];
+      };
+      if (!(methods instanceof Object)) {
+        throw new Error("You must specify constraint methods");
+      }
+      return this.relations.push(methods);
+    };
+    return Model;
+  })();
   namespace('Argure', function(exports) {
     return exports.Model = Model;
   });
