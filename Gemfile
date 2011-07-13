@@ -8,6 +8,7 @@ group :development do
 		gem 'rb-fsevent', '>= 0.4.0', :require => false
 	end
 	if RbConfig::CONFIG['target_os'] =~ /mswin|mingw/i
+		gem 'win32console'
 		gem 'rb-fchange', '>= 0.0.2', :require => false
 	end
 	gem 'guard'
