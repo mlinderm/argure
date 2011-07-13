@@ -1,13 +1,20 @@
 class Model
 	constructor: ->
+		@priCounter=1
 		# Convert observables into corresponding knockout observables
 		for name, options of @.constructor.observables
 			do (name, options) =>  # Create closure around each observable's name and options
 				state = "_" + name
+				priority = "pri_" + name
+				@[priority] = ko.observable 0
 				@[state] = ko.observable options.initial
 				@[name] = ko.dependentObservable
 					read: -> @[state]()
-					write: (value) -> @[state](value)
+					write: (value) -> 
+						@[state](value)
+						@[priority](@priCounter)
+						@priCounter++
+						return
 					owner: @
 		# Create dependent observables for relations (this is a crude way to do this)
 		@methods = []
