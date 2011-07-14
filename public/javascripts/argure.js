@@ -20,12 +20,12 @@
   Model = (function() {
     function Model() {
       var constraints, method, name, options, _fn, _fn2, _i, _len, _ref, _ref2;
-      this.priCounter = 1;
+      this.priCounter = 0;
       _ref = this.constructor.observables;
       _fn = __bind(function(name, options) {
         var priority, state;
         state = "_" + name;
-        priority = "pri_" + name;
+        priority = "_pri_" + name;
         this[priority] = ko.observable(0);
         this[state] = ko.observable(options.initial);
         return this[name] = ko.dependentObservable({
@@ -33,9 +33,8 @@
             return this[state]();
           },
           write: function(value) {
+            this[priority](++this.priCounter);
             this[state](value);
-            this[priority](this.priCounter);
-            this.priCounter++;
           },
           owner: this
         });
@@ -50,7 +49,7 @@
         constraints = _ref2[_i];
         _fn2 = __bind(function(name, method) {
           return this.methods.push(ko.dependentObservable(function() {
-            return this[name](method.call(this));
+            return this["_" + name](method.call(this));
           }, this));
         }, this);
         for (name in constraints) {

@@ -1,19 +1,18 @@
 class Model
 	constructor: ->
-		@priCounter=1
+		@priCounter=0
 		# Convert observables into corresponding knockout observables
 		for name, options of @.constructor.observables
 			do (name, options) =>  # Create closure around each observable's name and options
 				state = "_" + name
-				priority = "pri_" + name
+				priority = "_pri_" + name
 				@[priority] = ko.observable 0
 				@[state] = ko.observable options.initial
 				@[name] = ko.dependentObservable
 					read: -> @[state]()
 					write: (value) -> 
+						@[priority](++@priCounter)
 						@[state](value)
-						@[priority](@priCounter)
-						@priCounter++
 						return
 					owner: @
 		# Create dependent observables for relations (this is a crude way to do this)
@@ -22,7 +21,7 @@ class Model
 			for name, method of constraints
 				do (name, method) =>
 					@methods.push ko.dependentObservable ->
-						@[name](method.call(this))
+						@["_"+name](method.call(this))
 					, @
 
 	@observe: (name, options=undefined) ->
