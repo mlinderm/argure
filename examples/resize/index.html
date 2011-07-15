@@ -19,23 +19,23 @@
 
 				<label for="absHeight">Absolute Height</label>
 				<input type="text" id="absHeight" data-bind="value: absHeight"/>
-				<span data-bind="text:_pri_absHeight"></span>
+				<span data-bind="text: absHeight.priority"></span>
 				<br />
 				<label for="relHeight">Relative Height</label>
 				<input type="text" id="relHeight" data-bind="value: relHeight"/>
-				<span data-bind="text:_pri_relHeight"></span>
+				<span data-bind="text: relHeight.priority"></span>
 				<br />
 				<label for="absWidth">Absolute Width</label>
 				<input type="text" id="absWidth" data-bind="value: absWidth"/>
-				<span data-bind="text:_pri_absWidth"></span>
+				<span data-bind="text: absWidth.priority"></span>
 				<br />
 				<label for="relWidth">Relative Width</label>
 				<input type="text" id="relWidth" data-bind="value: relWidth"/>
-				<span data-bind="text:_pri_relWidth"></span>
+				<span data-bind="text: relWidth.priority"></span>
 				<br />
 				<label for="ratio">Lock Ratio</label>
 				<input type="checkbox" id="ratio" data-bind="checked: ratio"/>
-				<span data-bind="text:_pri_ratio"></span>
+				<span data-bind="text: ratio.priority"></span>
 
 			</form>
 
@@ -44,7 +44,7 @@
 					constructor: (@initHeight, @initWidth) ->
 						super()
 					@observe 'absHeight'
-					@observe 'relHeight', initial: 100 
+					@observe 'relHeight', initial: 100
 					@observe 'absWidth'
 					@observe 'relWidth', initial: 100
 					@observe 'ratio', initial: false
@@ -54,7 +54,7 @@
 					@relate
 						absWidth: -> (@relWidth() / 100.0) * @initWidth
 						relWidth: -> (@absWidth() / @initWidth) * 100.0
-					@relate	
+					@relate
 						relWidth: -> if @ratio() then @relHeight() else @relWidth()
 						relHeight: -> if @ratio() then @relWidth() else @relHeight()
 

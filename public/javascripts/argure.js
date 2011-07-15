@@ -19,42 +19,78 @@
   var __bind = function(fn, me){ return function(){ return fn.apply(me, arguments); }; };
   Model = (function() {
     function Model() {
-      var constraints, method, name, options, _fn, _fn2, _i, _len, _ref, _ref2, _ref3, _ref4;
+      var constraints, method, name, options, _fn, _fn2, _fn3, _i, _len, _ref, _ref2, _ref3, _ref4, _ref5, _ref6;
       this.priCounter = 0;
       _ref2 = (_ref = this.constructor.observables) != null ? _ref : {};
       _fn = __bind(function(name, options) {
-        var priority, state;
-        state = "_" + name;
-        priority = "_pri_" + name;
-        this[priority] = ko.observable(0);
-        this[state] = ko.observable(options.initial);
-        return this[name] = ko.dependentObservable({
+        var argure_observable, priority, state;
+        state = ko.observable(options.initial);
+        priority = ko.observable(0);
+        argure_observable = ko.dependentObservable({
           read: function() {
-            return this[state]();
+            return state();
           },
           write: function(value) {
-            this[priority](++this.priCounter);
-            this[state](value);
+            priority(++this.priCounter);
+            state(value);
+            return null;
           },
           owner: this
         });
+        argure_observable.state = state;
+        argure_observable.priority = priority;
+        return this[name] = argure_observable;
       }, this);
       for (name in _ref2) {
         options = _ref2[name];
         _fn(name, options);
       }
-      this.methods = [];
-      _ref4 = (_ref3 = this.constructor.relations) != null ? _ref3 : [];
-      for (_i = 0, _len = _ref4.length; _i < _len; _i++) {
-        constraints = _ref4[_i];
-        _fn2 = __bind(function(name, method) {
-          return this.methods.push(ko.dependentObservable(function() {
-            return this["_" + name](method.call(this));
+      _ref4 = (_ref3 = this.constructor.collections) != null ? _ref3 : {};
+      _fn2 = __bind(function(name, options) {
+        var argure_observable, method, priority, state, _fn3, _i, _len, _ref5;
+        state = ko.observableArray(options.initial);
+        priority = ko.observable(0);
+        argure_observable = ko.dependentObservable({
+          read: function() {
+            return state();
+          },
+          write: function(value) {
+            priority(++this.priCounter);
+            state(value);
+            return null;
+          },
+          owner: this
+        });
+        _ref5 = ["pop", "push", "reverse", "shift", "sort", "splice", "unshift", "slice", "remove", "removeAll", "destroy", "destroyAll", "indexOf"];
+        _fn3 = function(method) {
+          return argure_observable[method] = function() {
+            return state[method].apply(state, arguments);
+          };
+        };
+        for (_i = 0, _len = _ref5.length; _i < _len; _i++) {
+          method = _ref5[_i];
+          _fn3(method);
+        }
+        argure_observable.state = state;
+        argure_observable.priority = priority;
+        return this[name] = argure_observable;
+      }, this);
+      for (name in _ref4) {
+        options = _ref4[name];
+        _fn2(name, options);
+      }
+      this._methods = [];
+      _ref6 = (_ref5 = this.constructor.relations) != null ? _ref5 : [];
+      for (_i = 0, _len = _ref6.length; _i < _len; _i++) {
+        constraints = _ref6[_i];
+        _fn3 = __bind(function(name, method) {
+          return this._methods.push(ko.dependentObservable(function() {
+            return this[name].state(method.call(this));
           }, this));
         }, this);
         for (name in constraints) {
           method = constraints[name];
-          _fn2(name, method);
+          _fn3(name, method);
         }
       }
     }
@@ -72,6 +108,21 @@
         throw new Error("Observable " + name + " already exists");
       }
       return this.observables[name] = options != null ? options : {};
+    };
+    Model.collection = function(name, options) {
+      var _ref;
+      if (options == null) {
+        options = void 0;
+      }
+            if ((_ref = this.collections) != null) {
+        _ref;
+      } else {
+        this.collections = {};
+      };
+      if (this.collections[name] != null) {
+        throw new Error("Collection " + name + " already exists");
+      }
+      return this.collections[name] = options != null ? options : {};
     };
     Model.relate = function(methods) {
       var _ref;
