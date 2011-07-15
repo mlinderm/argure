@@ -19,9 +19,9 @@
   var __bind = function(fn, me){ return function(){ return fn.apply(me, arguments); }; };
   Model = (function() {
     function Model() {
-      var constraints, method, name, options, _fn, _fn2, _i, _len, _ref, _ref2;
+      var constraints, method, name, options, _fn, _fn2, _i, _len, _ref, _ref2, _ref3, _ref4;
       this.priCounter = 0;
-      _ref = this.constructor.observables;
+      _ref2 = (_ref = this.constructor.observables) != null ? _ref : {};
       _fn = __bind(function(name, options) {
         var priority, state;
         state = "_" + name;
@@ -39,14 +39,14 @@
           owner: this
         });
       }, this);
-      for (name in _ref) {
-        options = _ref[name];
+      for (name in _ref2) {
+        options = _ref2[name];
         _fn(name, options);
       }
       this.methods = [];
-      _ref2 = this.constructor.relations;
-      for (_i = 0, _len = _ref2.length; _i < _len; _i++) {
-        constraints = _ref2[_i];
+      _ref4 = (_ref3 = this.constructor.relations) != null ? _ref3 : [];
+      for (_i = 0, _len = _ref4.length; _i < _len; _i++) {
+        constraints = _ref4[_i];
         _fn2 = __bind(function(name, method) {
           return this.methods.push(ko.dependentObservable(function() {
             return this["_" + name](method.call(this));
