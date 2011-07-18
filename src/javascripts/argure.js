@@ -21,4 +21,4 @@
 
 }).call(this);
 
-//= require "../../vendor/coffee-script.js"
+//= require "../../vendor/coffee-script-debug.js"

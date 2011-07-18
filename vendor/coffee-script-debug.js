@@ -1,227 +1,3 @@
-(function() {
-
-
-	var namespace;
-	namespace = function(name, block) {
-		var item, target, top, _i, _len, _ref;
-		top = target = typeof exports !== 'undefined' ? exports : window;
-		_ref = name.split('.');
-		for (_i = 0, _len = _ref.length; _i < _len; _i++) {
-			item = _ref[_i];
-			target = target[item] || (target[item] = {});
-		}
-		return block(target, top);
-	};
-
-
-(function() {
-  var Model;
-  var __bind = function(fn, me){ return function(){ return fn.apply(me, arguments); }; };
-  Model = (function() {
-    function Model() {
-      var constraints, method, name, options, _fn, _fn2, _fn3, _i, _len, _ref, _ref2, _ref3, _ref4, _ref5, _ref6;
-      this.priCounter = 0;
-      _ref2 = (_ref = this.constructor.observables) != null ? _ref : {};
-      _fn = __bind(function(name, options) {
-        var argure_observable, priority, state;
-        state = ko.observable(options.initial);
-        priority = ko.observable(0);
-        argure_observable = ko.dependentObservable({
-          read: function() {
-            return state();
-          },
-          write: function(value) {
-            priority(++this.priCounter);
-            state(value);
-            return null;
-          },
-          owner: this
-        });
-        argure_observable.state = state;
-        argure_observable.priority = priority;
-        return this[name] = argure_observable;
-      }, this);
-      for (name in _ref2) {
-        options = _ref2[name];
-        _fn(name, options);
-      }
-      _ref4 = (_ref3 = this.constructor.collections) != null ? _ref3 : {};
-      _fn2 = __bind(function(name, options) {
-        var argure_observable, method, priority, state, _fn3, _i, _len, _ref5;
-        state = ko.observableArray(options.initial);
-        priority = ko.observable(0);
-        argure_observable = ko.dependentObservable({
-          read: function() {
-            return state();
-          },
-          write: function(value) {
-            priority(++this.priCounter);
-            state(value);
-            return null;
-          },
-          owner: this
-        });
-        _ref5 = ["pop", "push", "reverse", "shift", "sort", "splice", "unshift", "slice", "remove", "removeAll", "destroy", "destroyAll", "indexOf"];
-        _fn3 = function(method) {
-          return argure_observable[method] = function() {
-            return state[method].apply(state, arguments);
-          };
-        };
-        for (_i = 0, _len = _ref5.length; _i < _len; _i++) {
-          method = _ref5[_i];
-          _fn3(method);
-        }
-        argure_observable.state = state;
-        argure_observable.priority = priority;
-        return this[name] = argure_observable;
-      }, this);
-      for (name in _ref4) {
-        options = _ref4[name];
-        _fn2(name, options);
-      }
-      this._methods = [];
-      _ref6 = (_ref5 = this.constructor.relations) != null ? _ref5 : [];
-      for (_i = 0, _len = _ref6.length; _i < _len; _i++) {
-        constraints = _ref6[_i];
-        _fn3 = __bind(function(name, method) {
-          return this._methods.push(ko.dependentObservable(function() {
-            return this[name].state(method.call(this));
-          }, this));
-        }, this);
-        for (name in constraints) {
-          method = constraints[name];
-          _fn3(name, method);
-        }
-      }
-    }
-    Model.observe = function(name, options) {
-      var _ref;
-      if (options == null) {
-        options = void 0;
-      }
-            if ((_ref = this.observables) != null) {
-        _ref;
-      } else {
-        this.observables = {};
-      };
-      if (this.observables[name] != null) {
-        throw new Error("Observable " + name + " already exists");
-      }
-      return this.observables[name] = options != null ? options : {};
-    };
-    Model.collection = function(name, options) {
-      var _ref;
-      if (options == null) {
-        options = void 0;
-      }
-            if ((_ref = this.collections) != null) {
-        _ref;
-      } else {
-        this.collections = {};
-      };
-      if (this.collections[name] != null) {
-        throw new Error("Collection " + name + " already exists");
-      }
-      return this.collections[name] = options != null ? options : {};
-    };
-    Model.relate = function(methods) {
-      var _ref;
-            if ((_ref = this.relations) != null) {
-        _ref;
-      } else {
-        this.relations = [];
-      };
-      if (!(methods instanceof Object)) {
-        throw new Error("You must specify constraint methods");
-      }
-      return this.relations.push(methods);
-    };
-    return Model;
-  })();
-  namespace('Argure', function(exports) {
-    return exports.Model = Model;
-  });
-}).call(this);
-(function() {
-  var Many, ManyFromMany, buildSetObservable;
-  buildSetObservable = function(viewModel, set) {
-    if (typeof set === 'function') {
-      return ko.dependentObservable(set, viewModel);
-    } else {
-      return ko.observableArray(set);
-    }
-  };
-  Many = function(set) {
-    if (set == null) {
-      set = [];
-    }
-    return new Argure.ModelHelper(function() {
-      return {
-        set: buildSetObservable(this, set)
-      };
-    });
-  };
-  namespace('Argure', function(exports) {
-    return exports.Many = Many;
-  });
-  ManyFromMany = function(superset, subset) {
-    if (superset == null) {
-      superset = [];
-    }
-    if (subset == null) {
-      subset = [];
-    }
-    return new Argure.ModelHelper(function() {
-      return {
-        superset: buildSetObservable(this, superset),
-        subset: buildSetObservable(this, subset)
-      };
-    });
-  };
-  namespace('Argure', function(exports) {
-    return exports.ManyFromMany = ManyFromMany;
-  });
-  ko.bindingHandlers.manyFromMany = {
-    init: function(element, valueAccessor, allBindingsAccessor, viewModel) {
-      ko.bindingHandlers.selectedOptions.init(element, (function() {
-        return valueAccessor().subset;
-      }), allBindingsAccessor, viewModel);
-      return null;
-    },
-    update: function(element, valueAccessor, allBindingsAccessor, viewModel) {
-      ko.bindingHandlers.options.update(element, (function() {
-        return valueAccessor().superset;
-      }), allBindingsAccessor, viewModel);
-      ko.bindingHandlers.selectedOptions.update(element, (function() {
-        return valueAccessor().subset;
-      }), allBindingsAccessor, viewModel);
-      return null;
-    }
-  };
-  ko.bindingHandlers.displayMany = {
-    update: function(element, valueAccessor, allBindingsAccessor, viewModel) {
-      var template;
-      template = allBindingsAccessor()['displayTemplate'];
-      if (!(template != null)) {
-        throw new Error("'displayTemplate' binding needed when using 'displayMany'");
-      }
-      ko.bindingHandlers.template.update(element, (function() {
-        return {
-          name: template,
-          foreach: valueAccessor().set,
-          templateOptions: {
-            model: viewModel
-          }
-        };
-      }), allBindingsAccessor, viewModel);
-      return null;
-    }
-  };
-}).call(this);
-
-
-}).call(this);
-
 /**
  * CoffeeScript Compiler v1.1.1
  * http://coffeescript.org
@@ -1803,6 +1579,7 @@ parse: function parse(input) {
         TERROR = 2,
         EOF = 1;
 
+    //this.reductionCount = this.shiftCount = 0;
 
     this.lexer.setInput(input);
     this.lexer.yy = this.yy;
@@ -1824,6 +1601,7 @@ parse: function parse(input) {
     function lex() {
         var token;
         token = self.lexer.lex() || 1; // $end = 1
+        // if token isn't its numeric value, convert
         if (typeof token !== 'number') {
             token = self.symbols_[token] || token;
         }
@@ -1832,19 +1610,24 @@ parse: function parse(input) {
 
     var symbol, preErrorSymbol, state, action, a, r, yyval={},p,len,newState, expected;
     while (true) {
+        // retreive state number from top of stack
         state = stack[stack.length-1];
 
+        // use default actions if available
         if (this.defaultActions[state]) {
             action = this.defaultActions[state];
         } else {
             if (symbol == null)
                 symbol = lex();
+            // read action for current state and first input
             action = table[state] && table[state][symbol];
         }
 
+        // handle parse error
         if (typeof action === 'undefined' || !action.length || !action[0]) {
 
             if (!recovering) {
+                // Report error
                 expected = [];
                 for (p in table[state]) if (this.terminals_[p] && p > 2) {
                     expected.push("'"+this.terminals_[p]+"'");
@@ -1861,11 +1644,13 @@ parse: function parse(input) {
                     {text: this.lexer.match, token: this.terminals_[symbol] || symbol, line: this.lexer.yylineno, loc: yyloc, expected: expected});
             }
 
+            // just recovered from another error
             if (recovering == 3) {
                 if (symbol == EOF) {
                     throw new Error(errStr || 'Parsing halted.');
                 }
 
+                // discard current lookahead and grab another
                 yyleng = this.lexer.yyleng;
                 yytext = this.lexer.yytext;
                 yylineno = this.lexer.yylineno;
@@ -1873,7 +1658,9 @@ parse: function parse(input) {
                 symbol = lex();
             }
 
+            // try to recover from error
             while (1) {
+                // check for error recovery rule in this state
                 if ((TERROR.toString()) in table[state]) {
                     break;
                 }
@@ -1891,6 +1678,7 @@ parse: function parse(input) {
             recovering = 3; // allow 3 real symbols to be shifted before reporting a new error
         }
 
+        // this shouldn't happen, unless resolve defaults are off
         if (action[0] instanceof Array && action.length > 1) {
             throw new Error('Parse Error: multiple actions possible at state: '+state+', token: '+symbol);
         }
@@ -1898,6 +1686,7 @@ parse: function parse(input) {
         switch (action[0]) {
 
             case 1: // shift
+                //this.shiftCount++;
 
                 stack.push(symbol);
                 vstack.push(this.lexer.yytext);
@@ -1918,10 +1707,13 @@ parse: function parse(input) {
                 break;
 
             case 2: // reduce
+                //this.reductionCount++;
 
                 len = this.productions_[action[1]][1];
 
+                // perform semantic action
                 yyval.$ = vstack[vstack.length-len]; // default to $$ = $1
+                // default location, uses first token for firsts, last for lasts
                 yyval._$ = {
                     first_line: lstack[lstack.length-(len||1)].first_line,
                     last_line: lstack[lstack.length-1].last_line,
@@ -1934,6 +1726,7 @@ parse: function parse(input) {
                     return r;
                 }
 
+                // pop off stack
                 if (len) {
                     stack = stack.slice(0,-1*len*2);
                     vstack = vstack.slice(0, -1*len);
@@ -1943,6 +1736,7 @@ parse: function parse(input) {
                 stack.push(this.productions_[action[1]][0]);    // push nonterminal (reduce)
                 vstack.push(yyval.$);
                 lstack.push(yyval._$);
+                // goto new state = table[STATE][NONTERMINAL]
                 newState = table[stack[stack.length-2]][stack[stack.length-1]];
                 stack.push(newState);
                 break;
