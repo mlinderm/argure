@@ -393,6 +393,7 @@ ko.exportSymbol('ko.utils.toggleDomNodeCssClass', ko.utils.toggleDomNodeCssClass
 ko.exportSymbol('ko.utils.triggerEvent', ko.utils.triggerEvent);
 ko.exportSymbol('ko.utils.unwrapObservable', ko.utils.unwrapObservable);
 
+
 if (!Function.prototype['bind']) {
     // Function.prototype.bind is a standard part of ECMAScript 5th Edition (December 2009, http://www.ecma-international.org/publications/files/ECMA-ST/ECMA-262.pdf)
     // In case the browser doesn't implement it natively, provide a JavaScript implementation. This implementation is based on the one in prototype.js
@@ -685,22 +686,25 @@ ko.exportSymbol('ko.isSubscribable', ko.isSubscribable);
 
 ko.dependencyDetection = (function () {
     var _detectedDependencies = [];
-
+    var _outIndex = [];
     return {
-        begin: function () {
+        begin: function (out) {
             _detectedDependencies.push([]);
+			_outIndex.push(out);
         },
 
         end: function () {
+			_outIndex.pop();
             return _detectedDependencies.pop();
         },
 
-        registerDependency: function (subscribable) {
+        registerDependency: function (subscribable,inIndex) {
             if (!ko.isSubscribable(subscribable))
                 throw "Only subscribable things can act as dependencies";
             if (_detectedDependencies.length > 0) {
                 _detectedDependencies[_detectedDependencies.length - 1].push(subscribable);
-            }
+            	ko.graph.addDependency(inIndex,_outIndex[_outIndex.length-1]);
+			}
         }
     };
 })();var primitiveTypes = { 'undefined':true, 'boolean':true, 'number':true, 'string':true };
@@ -712,7 +716,7 @@ function valuesArePrimitiveAndEqual(a, b) {
 
 ko.observable = function (initialValue) {
     var _latestValue = initialValue;
-
+	var myIndex = ko.myCounter++;
     function observable() {
         if (arguments.length > 0) {
             // Write            
@@ -726,7 +730,7 @@ ko.observable = function (initialValue) {
         }
         else {
             // Read
-            ko.dependencyDetection.registerDependency(observable); // The caller only needs to be notified of changes if they did a "read" operation
+            ko.dependencyDetection.registerDependency(observable,myIndex); // The caller only needs to be notified of changes if they did a "read" operation
             return _latestValue;
         }
     }
@@ -866,7 +870,7 @@ ko.observableArray = function (initialValues) {
 ko.exportSymbol('ko.observableArray', ko.observableArray);
 ko.dependentObservable = function (evaluatorFunctionOrOptions, evaluatorFunctionTarget, options) {
     var _latestValue, _hasBeenEvaluated = false;
-    
+    var myIndex = ko.myCounter++; 
     if (evaluatorFunctionOrOptions && typeof evaluatorFunctionOrOptions == "object") {
         // Single-parameter syntax - everything is on this "options" param
         options = evaluatorFunctionOrOptions;
@@ -923,7 +927,7 @@ ko.dependentObservable = function (evaluatorFunctionOrOptions, evaluatorFunction
         }
 
         try {
-            ko.dependencyDetection.begin();
+            ko.dependencyDetection.begin(myIndex);
             _latestValue = options["owner"] ? options["read"].call(options["owner"]) : options["read"]();
         } finally {
             var distinctDependencies = ko.utils.arrayGetDistinctValues(ko.dependencyDetection.end());
@@ -947,7 +951,7 @@ ko.dependentObservable = function (evaluatorFunctionOrOptions, evaluatorFunction
             // Reading the value
             if (!_hasBeenEvaluated)
                 evaluate();
-            ko.dependencyDetection.registerDependency(dependentObservable);
+            ko.dependencyDetection.registerDependency(dependentObservable,myIndex);
             return _latestValue;
         }
     }
@@ -2217,3 +2221,36 @@ ko.jqueryTmplTemplateEngine.prototype = new ko.templateEngine();
 ko.setTemplateEngine(new ko.jqueryTmplTemplateEngine());
 
 ko.exportSymbol('ko.jqueryTmplTemplateEngine', ko.jqueryTmplTemplateEngine);})(window);                  
+
+ko.myCounter = 0;
+ko.graph = new(function(){
+	var state = new Array();
+	this.addDependency = function (input, output){
+		if(state[input]===undefined){
+			state[input] = new Array();
+		}
+		for(i=0;i<state[input].length;i++){
+			if(state[input][i] == output) return;
+		}
+		state[input].push(output);
+	}
+	this.removeDependency = function (input, output){
+		for(i=0;i<state[input].length;i++){
+			if(state[input][i] == output){
+				state[input][i].splice(i,1);
+				return;
+			}
+		}
+	}
+	this.printDependency = function(){
+		output = "";
+		for(i=0;i<state.length;i++){
+			output = output + i + ": ";
+			for(j=0;j<state[i].length;j++){
+				output = output + j + " ";
+			}
+			output = output + "\n";
+		}
+		alert(output);
+	}
+})
