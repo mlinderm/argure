@@ -46,21 +46,21 @@
 
 
 			<script type="text/coffeescript" charset="utf-8">
-
-				common_params = (files) ->	
-					if files.length > 0 then files.slice(1).reduce ((m,p) -> _.intersect(m,p.pN)), files[0].pN else []
-
+	
 				class SpadePanel extends Argure.Model
 					constructor: (@availPanelFiles) ->
 						super()
+
+					common_params: (files) ->	
+						if files.length > 0 then files.slice(1).reduce ((m,p) -> _.intersect(m,p.pN)), files[0].pN else []
 
 					@observe 'slctdPanelFiles', initial: []
 					@observe 'slctdRefFiles', initial: []
 					@observe 'availFoldParams'
 					@observe 'slctdFoldParams', initial: []
 
-					@relate
-						availFoldParams: -> common_params @slctdPanelFiles()
+					@relate (c) ->
+						c.method 'availFoldParams = common_params(slctdPanelFiles)'
 
 
 				# /SpadePanel
@@ -71,12 +71,15 @@
 						@create_panel()
 
 					create_panel: -> @panels.push(new SpadePanel(@slctdFiles))
+					common_params: (files) ->	
+						if files.length > 0 then files.slice(1).reduce ((m,p) -> _.intersect(m,p.pN)), files[0].pN else []
+
 
 					@observe 'slctdFiles', initial: []
 					@observe 'availClusterParams'
 					@observe 'slctdClusterParams', initial: []
-					@relate
-						availClusterParams: -> common_params @slctdFiles()
+					@relate (c) ->
+						c.method 'availClusterParams = common_params(slctdFiles)'
 
 					@collection 'panels', initial: []
 													
