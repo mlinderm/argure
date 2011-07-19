@@ -35,19 +35,21 @@ class Model
 				for method in ["pop", "push", "reverse", "shift", "sort", "splice", "unshift", "slice", "remove", "removeAll", "destroy", "destroyAll", "indexOf"]
 					do(method) ->
 						argure_observable[method] = ->
-							state[method].apply(state, arguments)
+							state[method].apply state, arguments
 				argure_observable.state = state
 				argure_observable.priority = priority
 				@[name] = argure_observable
 
 		# Create dependent observables for relations (this is a crude way to do this)
 		@_methods = []
-		for constraints in @.constructor.relations ? []
-			for name, method of constraints
-				do (name, method) =>
+		@constraints = []
+		for constraint in @.constructor.relations ? []
+			idx = @constraints.push new Argure.Constraint constraint
+			for method in @constraints[idx-1].methods
+				do (method) =>
 					@_methods.push ko.dependentObservable ->
-						@[name].state(method.call(this))
-					, @
+						@[method.output].state method.body.apply(this, (ko.utils.unwrapObservable(@[name]) for name in method.inputs))
+					, @	
 
 	@observe: (name, options=undefined) ->
 		@observables ?= {}
@@ -61,7 +63,7 @@ class Model
 
 	@relate: (methods) ->
 		@relations ?= []
-		throw new Error("You must specify constraint methods") if !(methods instanceof Object)
+		throw new Error("You must specify constraint methods") if typeof methods != "function"
 		@relations.push(methods)
 
 namespace 'Argure', (exports) ->

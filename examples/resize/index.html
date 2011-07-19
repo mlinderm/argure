@@ -48,16 +48,19 @@
 					@observe 'absWidth'
 					@observe 'relWidth', initial: 100
 					@observe 'ratio', initial: false
-					@relate
-						absHeight: -> (@relHeight() / 100.0) * @initHeight
-						relHeight: -> (@absHeight() / @initHeight) * 100.0
-					@relate
-						absWidth: -> (@relWidth() / 100.0) * @initWidth
-						relWidth: -> (@absWidth() / @initWidth) * 100.0
-					@relate
-						relWidth: -> if @ratio() then @relHeight() else @relWidth()
-						relHeight: -> if @ratio() then @relWidth() else @relHeight()
+					
+					@relate (c) ->
+						c.method absHeight: ['relHeight', 'initHeight'], (r, i) -> (r / 100.0 * i)
+						c.method relHeight: ['absHeight', 'initHeight'], (a, i) -> (a / i) * 100.0
 
+					@relate (c) ->
+						c.method absWidth: ['relWidth', 'initWidth'], (r, i) -> (r / 100.0 * i)
+						c.method relWidth: ['absWidth', 'initWidth'], (a, i) -> (a / i) * 100.0
+
+					@relate (c) ->
+						c.method relWidth: ['relHeight', 'relWidth', 'ratio'], (h, w, r) -> if r then h else w
+						c.method relHeight: ['relHeight', 'relWidth', 'ratio'], (h, w, r) -> if r then w else h
+	
 				this.resizer = new Resizer(1000, 1000)
 				ko.applyBindings(this.resizer)
 			</script>

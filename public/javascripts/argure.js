@@ -15,11 +15,45 @@
 
 
 (function() {
+  var Constraint, Method;
+  Method = (function() {
+    function Method(inputs, output, body) {
+      this.inputs = inputs;
+      this.output = output;
+      this.body = body;
+    }
+    return Method;
+  })();
+  Constraint = (function() {
+    function Constraint(formulas) {
+      this.methods = [];
+      if (typeof formulas === "function") {
+        formulas.call(this, this);
+      } else {
+        throw new Error("Only object-based constraints are supported");
+      }
+    }
+    Constraint.prototype.method = function(args_or_code, body) {
+      var i, inputs, o, output, _ref, _ref2;
+      _ref = [void 0, []], output = _ref[0], inputs = _ref[1];
+      for (o in args_or_code) {
+        i = args_or_code[o];
+        _ref2 = [o, i], output = _ref2[0], inputs = _ref2[1];
+      }
+      return this.methods.push(new Method(inputs, output, body));
+    };
+    return Constraint;
+  })();
+  namespace('Argure', function(exports) {
+    return exports.Constraint = Constraint;
+  });
+}).call(this);
+(function() {
   var Model;
   var __bind = function(fn, me){ return function(){ return fn.apply(me, arguments); }; };
   Model = (function() {
     function Model() {
-      var constraints, method, name, options, _fn, _fn2, _fn3, _i, _len, _ref, _ref2, _ref3, _ref4, _ref5, _ref6;
+      var constraint, idx, method, name, options, _fn, _fn2, _fn3, _i, _j, _len, _len2, _ref, _ref2, _ref3, _ref4, _ref5, _ref6, _ref7;
       this.priCounter = 0;
       _ref2 = (_ref = this.constructor.observables) != null ? _ref : {};
       _fn = __bind(function(name, options) {
@@ -80,17 +114,30 @@
         _fn2(name, options);
       }
       this._methods = [];
+      this.constraints = [];
       _ref6 = (_ref5 = this.constructor.relations) != null ? _ref5 : [];
       for (_i = 0, _len = _ref6.length; _i < _len; _i++) {
-        constraints = _ref6[_i];
-        _fn3 = __bind(function(name, method) {
+        constraint = _ref6[_i];
+        idx = this.constraints.push(new Argure.Constraint(constraint));
+        _ref7 = this.constraints[idx - 1].methods;
+        _fn3 = __bind(function(method) {
           return this._methods.push(ko.dependentObservable(function() {
-            return this[name].state(method.call(this));
+            var name;
+            return this[method.output].state(method.body.apply(this, (function() {
+              var _k, _len3, _ref8, _results;
+              _ref8 = method.inputs;
+              _results = [];
+              for (_k = 0, _len3 = _ref8.length; _k < _len3; _k++) {
+                name = _ref8[_k];
+                _results.push(ko.utils.unwrapObservable(this[name]));
+              }
+              return _results;
+            }).call(this)));
           }, this));
         }, this);
-        for (name in constraints) {
-          method = constraints[name];
-          _fn3(name, method);
+        for (_j = 0, _len2 = _ref7.length; _j < _len2; _j++) {
+          method = _ref7[_j];
+          _fn3(method);
         }
       }
     }
@@ -131,7 +178,7 @@
       } else {
         this.relations = [];
       };
-      if (!(methods instanceof Object)) {
+      if (typeof methods !== "function") {
         throw new Error("You must specify constraint methods");
       }
       return this.relations.push(methods);
