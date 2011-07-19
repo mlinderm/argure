@@ -14,7 +14,7 @@ class Model
 						state(value)
 						return null
 					owner: @
-				
+			
 				argure_observable.state = state
 				argure_observable.priority = priority
 				@[name] = argure_observable
@@ -49,7 +49,7 @@ class Model
 				do (method) =>
 					@_methods.push ko.dependentObservable ->
 						@[method.output].state method.body.apply(this, (ko.utils.unwrapObservable(@[name]) for name in method.inputs))
-					, @	
+					, @
 
 	@observe: (name, options=undefined) ->
 		@observables ?= {}
