@@ -15,7 +15,48 @@
 
 
 (function() {
-  var Constraint, Method;
+  var ASTVisitor, Constraint, ExtractOperandsVisitor, Method, extract_operands;
+  var __bind = function(fn, me){ return function(){ return fn.apply(me, arguments); }; }, __hasProp = Object.prototype.hasOwnProperty, __extends = function(child, parent) {
+    for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; }
+    function ctor() { this.constructor = child; }
+    ctor.prototype = parent.prototype;
+    child.prototype = new ctor;
+    child.__super__ = parent.prototype;
+    return child;
+  };
+  ASTVisitor = (function() {
+    function ASTVisitor() {}
+    ASTVisitor.prototype.apply = function(node) {
+      var result, _name, _ref, _ref2;
+      result = (_ref = typeof this[_name = node.constructor.name] === "function" ? this[_name](node) : void 0) != null ? _ref : (_ref2 = typeof this["default"] === "function" ? this["default"](node) : void 0) != null ? _ref2 : false;
+      return result && node.eachChild(__bind(function(node) {
+        return this.apply(node);
+      }, this));
+    };
+    return ASTVisitor;
+  })();
+  ExtractOperandsVisitor = (function() {
+    __extends(ExtractOperandsVisitor, ASTVisitor);
+    function ExtractOperandsVisitor() {
+      this.operands = [];
+    }
+    ExtractOperandsVisitor.prototype["default"] = function(node) {
+      return true;
+    };
+    ExtractOperandsVisitor.prototype.Value = function(node) {
+      if (node.isAssignable()) {
+        this.operands.push(node.unwrap().value);
+      }
+      return true;
+    };
+    return ExtractOperandsVisitor;
+  })();
+  extract_operands = function(ast) {
+    var v;
+    v = new ExtractOperandsVisitor;
+    v.apply(ast);
+    return v.operands;
+  };
   Method = (function() {
     function Method(inputs, output, body) {
       this.inputs = inputs;
@@ -27,20 +68,32 @@
   Constraint = (function() {
     function Constraint(formulas) {
       this.methods = [];
-      if (typeof formulas === "function") {
-        formulas.call(this, this);
-      } else {
-        throw new Error("Only object-based constraints are supported");
-      }
+      formulas.call(this, this);
     }
     Constraint.prototype.method = function(args_or_code, body) {
-      var i, inputs, o, output, _ref, _ref2;
-      _ref = [void 0, []], output = _ref[0], inputs = _ref[1];
-      for (o in args_or_code) {
-        i = args_or_code[o];
-        _ref2 = [o, i], output = _ref2[0], inputs = _ref2[1];
+      var assignment, ast, i, inputs, o, output, _ref;
+      if (typeof args_or_code === "string") {
+        ast = CoffeeScript.nodes(args_or_code);
+        assignment = ast.unwrap();
+        if (assignment.constructor.name === "Assign") {
+          output = extract_operands(assignment.variable);
+          inputs = extract_operands(assignment.value);
+          eval("body = function(" + (inputs.join(',')) + ") { return " + (assignment.value.compile()) + "; }");
+          return this.methods.push(new Method(inputs, output, body));
+        } else {
+          if (!(ev.inputs != null) || !(ev.output != null)) {
+            throw new Error("Ill formed constraint method: no inputs or output found");
+          }
+        }
+      } else if (typeof args_or_code === "object") {
+        for (o in args_or_code) {
+          i = args_or_code[o];
+          _ref = [o, i], output = _ref[0], inputs = _ref[1];
+        }
+        return this.methods.push(new Method(inputs, output, body));
+      } else {
+        throw new Error("Unsupported method specification");
       }
-      return this.methods.push(new Method(inputs, output, body));
     };
     return Constraint;
   })();
