@@ -2253,4 +2253,5 @@ ko.graph = new(function(){
 		}
 		alert(output);
 	}
-})
+});
+
