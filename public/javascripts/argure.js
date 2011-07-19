@@ -15,7 +15,7 @@
 
 
 (function() {
-  var CnGraph, Constraint, Method;
+  var Constraint, Method;
   Method = (function() {
     function Method(inputs, output, body) {
       this.inputs = inputs;
@@ -28,6 +28,7 @@
     function Constraint(formulas, id) {
       this.methods = [];
       this.id = id;
+      this.currentMethod = void 0;
       if (typeof formulas === "function") {
         formulas.call(this, this);
       } else {
@@ -45,14 +46,6 @@
     };
     return Constraint;
   })();
-  CnGraph = (function() {
-    function CnGraph() {}
-    CnGraph.obsToCn = [];
-    CnGraph.cnToObs = [];
-    CnGraph.prototype.addContraint = function(cn) {};
-    CnGraph.prototype.chooseMethod = function(cn, method) {};
-    return CnGraph;
-  })();
   namespace('Argure', function(exports) {
     return exports.Constraint = Constraint;
   });
@@ -68,8 +61,9 @@
       this.cnCounter = 0;
       _ref2 = (_ref = this.constructor.observables) != null ? _ref : {};
       _fn = __bind(function(name, options) {
-        var argure_observable, id, priority, state;
+        var argure_observable, cnToNotify, id, priority, state;
         id = this.obsCounter++;
+        cnToNotify = [];
         state = ko.observable(options.initial);
         priority = ko.observable(0);
         argure_observable = ko.dependentObservable({
@@ -77,14 +71,22 @@
             return state();
           },
           write: function(value) {
+            var cn, _i, _len, _ref3;
             priority(++this.priCounter);
             state(value);
+            _ref3 = this[name].cnToNotify;
+            for (_i = 0, _len = _ref3.length; _i < _len; _i++) {
+              cn = _ref3[_i];
+              this.notifyCn(cn);
+            }
             return null;
           },
           owner: this
         });
         argure_observable.state = state;
         argure_observable.priority = priority;
+        argure_observable.id = id;
+        argure_observable.cnToNotify = cnToNotify;
         return this[name] = argure_observable;
       }, this);
       for (name in _ref2) {
@@ -133,28 +135,25 @@
         idx = this.constraints.push(new Argure.Constraint(constraint, this.cnCounter++));
         _ref7 = this.constraints[idx - 1].methods;
         _fn3 = __bind(function(method) {
-          return this._methods.push(ko.dependentObservable(function() {
-            var name;
-            return this[method.output].state(method.body.apply(this, (function() {
-              var _k, _len3, _ref8, _results;
-              _ref8 = method.inputs;
-              _results = [];
-              for (_k = 0, _len3 = _ref8.length; _k < _len3; _k++) {
-                name = _ref8[_k];
-                _results.push(ko.utils.unwrapObservable(this[name]));
-              }
-              return _results;
-            }).call(this)));
-          }, this));
+          var input, _k, _len3, _ref8;
+          _ref8 = method.inputs;
+          for (_k = 0, _len3 = _ref8.length; _k < _len3; _k++) {
+            input = _ref8[_k];
+            if (this[input].cnToNotify !== void 0 && this[input].cnToNotify.indexOf(constraint) === -1) {
+              this[input].cnToNotify.push(this.constraints[idx - 1]);
+            }
+          }
+          if (this[method.output].cnToNotify !== void 0 && this[method.output].cnToNotify.indexOf(constraint) === -1) {
+            return this[method.output].cnToNotify.push(this.constraints[idx - 1]);
+          }
         }, this);
         for (_j = 0, _len2 = _ref7.length; _j < _len2; _j++) {
           method = _ref7[_j];
           _fn3(method);
         }
       }
-      this.notifyObs = function(obs, priority) {
+      this.notifyObs = function(obs) {
         var cn, _k, _len3, _ref8, _results;
-        this[obs].priority = priority;
         _ref8 = this[obs].cnToNotify;
         _results = [];
         for (_k = 0, _len3 = _ref8.length; _k < _len3; _k++) {
@@ -164,21 +163,43 @@
         return _results;
       };
       this.notifyCn = function(cn) {
-        var method, minMethod, minPri, _k, _len3, _ref8;
+        var method, minMethod, minPri, name, oldMethod, oldPri, oldValue, _k, _len3, _ref8;
+        oldMethod = cn.currentMethod;
+        if (oldMethod !== void 0) {
+          oldValue = this[oldMethod.output].state();
+          oldPri = this[oldMethod.output].priority();
+        }
+        minPri = Infinity;
+        minMethod = void 0;
         _ref8 = cn.methods;
         for (_k = 0, _len3 = _ref8.length; _k < _len3; _k++) {
           method = _ref8[_k];
-          minPri = Infinity;
-          minMethod = void 0;
-          if (this[method.output].priority < minPri) {
-            minPri = this[method.output].priority;
+          if (this[method.output].priority() < minPri) {
+            minPri = this[method.output].priority();
             minMethod = method;
           }
         }
-        if (minMethod !== void 0) {
-          cnGraph.add(cn, method);
-          cnGraph.detectCycle();
-          return this.notifyObs(method.output);
+        if (minMethod === void 0) {
+          throw new Error("The graph is over constrainted.");
+        } else {
+          this[minMethod.output].state(minMethod.body.apply(this, (function() {
+            var _l, _len4, _ref9, _results;
+            _ref9 = minMethod.inputs;
+            _results = [];
+            for (_l = 0, _len4 = _ref9.length; _l < _len4; _l++) {
+              name = _ref9[_l];
+              _results.push(ko.utils.unwrapObservable(this[name]));
+            }
+            return _results;
+          }).call(this)));
+          if (minMethod === oldMethod) {
+            if (this[minMethod.output].state() === oldValue && minPri === oldPri) {
+              return;
+            }
+          }
+          cn.currentMethod = minMethod;
+          this[minMethod.output].priority(minPri);
+          this.notifyObs(minMethod.output);
         }
       };
     }

@@ -7,6 +7,7 @@ class Model
 		for name, options of @.constructor.observables ? {}
 			do (name, options) =>  # Create closure around each observable's name and options
 				id = @obsCounter++
+				cnToNotify = []
 				state    = ko.observable options.initial
 				priority = ko.observable 0
 				argure_observable = ko.dependentObservable
@@ -14,10 +15,15 @@ class Model
 					write: (value) ->
 						priority(++@priCounter)
 						state(value)
+						for cn in @[name].cnToNotify
+							@notifyCn(cn)
 						return null
 					owner: @
+
 				argure_observable.state = state
 				argure_observable.priority = priority
+				argure_observable.id = id
+				argure_observable.cnToNotify = cnToNotify
 				@[name] = argure_observable
 
 		# Convert collections into corresponding knockout observable arrays
@@ -48,27 +54,42 @@ class Model
 			idx = @constraints.push new Argure.Constraint constraint, @cnCounter++
 			for method in @constraints[idx-1].methods
 				do (method) =>
-					@_methods.push ko.dependentObservable ->
-						@[method.output].state method.body.apply(this, (ko.utils.unwrapObservable(@[name]) for name in method.inputs))
-					, @
+					for input in method.inputs
+						if @[input].cnToNotify != undefined and @[input].cnToNotify.indexOf(constraint)==-1
+							@[input].cnToNotify.push(@constraints[idx-1])
+					if @[method.output].cnToNotify != undefined and @[method.output].cnToNotify.indexOf(constraint)==-1
+						@[method.output].cnToNotify.push(@constraints[idx-1])
+#					@_methods.push ko.dependentObservable ->
+#						@[method.output].state method.body.apply(this, (ko.utils.unwrapObservable(@[name]) for name in method.inputs))
+#					, @
 
-		@notifyObs = (obs,priority) ->
-			@[obs].priority = priority
+		@notifyObs = (obs) ->
 			for cn in @[obs].cnToNotify
 				@notifyCN(cn)
 
 		@notifyCn = (cn) ->
+			oldMethod = cn.currentMethod
+			if(oldMethod!=undefined)
+				oldValue = @[oldMethod.output].state()
+				oldPri = @[oldMethod.output].priority()
+			minPri = Infinity
+			minMethod = undefined
 			for method in cn.methods
-				minPri = Infinity
-				minMethod = undefined
-				if @[method.output].priority < minPri
-					minPri = @[method.output].priority
+				if @[method.output].priority() < minPri
+					minPri = @[method.output].priority()
 					minMethod = method
-			if minMethod != undefined
-				cnGraph.add(cn,method)
-				cnGraph.detectCycle()
-				@notifyObs(method.output)
-
+			if minMethod == undefined
+				throw new Error("The graph is over constrainted.")
+			else
+				@[minMethod.output].state minMethod.body.apply(this, (ko.utils.unwrapObservable(@[name]) for name in minMethod.inputs))
+#				cnGraph.detectCycle()
+				if(minMethod == oldMethod)
+					if(@[minMethod.output].state() == oldValue and minPri == oldPri)
+						return
+				cn.currentMethod = minMethod
+				@[minMethod.output].priority(minPri)
+				@notifyObs(minMethod.output)
+				return
 	
 
 	@observe: (name, options=undefined) ->
