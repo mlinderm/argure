@@ -9,105 +9,87 @@
 		<script src="../../public/javascripts/argure.js"></script>
 	</head>
 	<body>
-		<h1>
-			SPADE Command Synthesis
-		</h1>
-		<div id="spadeArgure">
-			
+		<div>	
 			<!-- "view" for created panels -->
-			<script id="panelTemplate" type="text/html">
+			<script id="panelTemplate" type="text/html" charset="utf-8">
 				<li>
-					<p>
-					File()s: {{each $data.files}} ${$value}, {{/each}}
-					<br>
-					Median Markers: All
-					<br>
-					Reference File(s): {{each $data.refFiles}} ${$value}, {{/each}} 
-					<br>
-					Fold Change Parameter(s): {{each $data.fldParams}} ${$value}, {{/each}} 
-					</p>
-					<button data-bind="click: function() { $item.model.panels.set.remove($data); }">Delete Panel</button>
+					<form>
+						<label for="panelFiles">Select Panel Files:</label>
+						<select id="panelFiles" data-bind='options: availPanelFiles, selectedOptions: slctdPanelFiles, optionsText: "name"' multiple=multiple></select>
+						<label for="panelRefFiles">Select Reference Files:</label>
+						<select id="panelRefFiles" data-bind='options: slctdPanelFiles, selectedOptions: slctdRefFiles, optionsText: "name"' multiple=multiple></select>
+						<label for="panelRefParams">Select Fold Change Parameters:</label>
+						<select id="panelRefParams" data-bind='options: availFoldParams, selectedOptions: slctdFoldParams' multiple=multiple></select>
+						<button data-bind="click: function() { $item.parentCollection.remove(this); }">Delete Panel</button>
+					</form>
 				</li>
 			</script>
 
-			
-			<h2>Setup Spade Analysis</h2>
-			<form id="spadeMainArgs">
-				
-				<label for="slctdFiles">Select Files for Analysis:</label>
-				<select id="slctdFiles" data-bind='manyFromMany: files, optionsText: "name"' multiple="multiple"></select>
-				
-				<label for="clustParams">Select Clustering Parameters:</label>
-				<select id="clustParams" data-bind='manyFromMany: clusterParams' multiple=multiple></select>
-
-				<h3>Current Panels</h3>
-				<ul data-bind='displayMany: panels, displayTemplate: "panelTemplate"'>
-				</ul>
-			</form>
-
-			<h3> Create New or Additional Panels </h3>
-			<form id="spadeCreatePanel" data-bind='submit: createPanel'>
-				<label for="panelFiles">Select Panel Files:</label>
-				<select id="panelFiles" data-bind='manyFromMany: panelFiles, optionsText: "name"' multiple=multiple></select>
-
-				<label for="panelRefFiles">Select Reference Files:</label>
-				<select id="panelRefFiles" data-bind='manyFromMany: panelRefFiles, optionsText: "name"' multiple=multiple></select>
-
-				<label for="panelRefParams">Select Fold Change Parameters:</label>
-				<select id="panelRefParams" data-bind='manyFromMany: panelFoldParams' multiple=multiple></select>
-
-				<button type="submit">Create Panel</button>
-			</form>
-						
-						
-			<script type="text/javascript">
-				// Example intializing data that might be returned from AJAX query					
-				var spadeFiles = jQuery.parseJSON('{ \
-					"files": [ \
-						{ "name": "tube1.fcs", "pN": ["cd3","cd4","cd8"] }, \
-						{ "name": "tube2.fcs", "pN": ["cd3","cd4","cd19"] } \
-					] \
-				}');
-
-				// Return the array of parameters (pN) commons to all files in argument array
-				function commonParams(files) {
-					return (files.length > 0) ? _.reduce(files.slice(1), function(m,p) { return _.intersect(m,p.pN); }, _.first(files).pN) : [];
-				}
-
+			<script id="spadeTemplate" type="text/html" charset="utf-8">	
+				<h2>Setup Spade Analysis</h2>
+				<form>
+					<label for="slctdFiles">Select Files for Analysis:</label>
+					<select id="slctdFiles" data-bind='options: files, selectedOptions: slctdFiles, optionsText: "name"' multiple="multiple"></select>
+					<label for="clustParams">Select Clustering Parameters:</label>
+					<select id="clustParams" data-bind='options: availClusterParams' multiple=multiple ></select>
+					<h3>Panels</h3>
+					<ul data-bind='template: { name: "panelTemplate", foreach: panels, templateOptions: { parentCollection: panels } }' ></ul>
+					<button data-bind="click: create_panel">Create Another Panel</button>
+				</form>
 			</script>
+
+			<h1>
+				SPADE Command Synthesis
+			</h1>
+			<div data-bind='template: "spadeTemplate"'> 
+			</div>
+
 
 			<script type="text/coffeescript" charset="utf-8">
-				
-				
-				spadeCMD = Argure.Model
-					files:         Argure.ManyFromMany spadeFiles['files']
-					clusterParams: Argure.ManyFromMany ->
-						commonParams(@files.subset())
-					panels:        Argure.Many()
 
-					panelFiles: Argure.ManyFromMany ->
-						usedFiles = _.flatten _.pluck @panels.set(), 'files'
-						_.reject @files.subset(), (f) ->
-							_.include usedFiles, f.name
-					panelRefFiles: Argure.ManyFromMany ->
-						@panelFiles.subset()
-					panelFoldParams: Argure.ManyFromMany ->
-						commonParams(@panelFiles.subset())
+				common_params = (files) ->	
+					if files.length > 0 then files.slice(1).reduce ((m,p) -> _.intersect(m,p.pN)), files[0].pN else []
 
-					createPanel: ->
-						@panels.set.push
-							files: file.name for file in @panelFiles.subset.splice(0)
-							refFiles: file.name for file in @panelRefFiles.subset.splice(0)
-							fldParams: @panelFoldParams.subset.splice(0)
+				class SpadePanel extends Argure.Model
+					constructor: (@availPanelFiles) ->
+						super()
+
+					@observe 'slctdPanelFiles', initial: []
+					@observe 'slctdRefFiles', initial: []
+					@observe 'availFoldParams'
+					@observe 'slctdFoldParams', initial: []
+
+					@relate
+						availFoldParams: -> common_params @slctdPanelFiles()
 
 
-				ko.applyBindings(spadeCMD)
+				# /SpadePanel
 
+				class Spade extends Argure.Model
+					constructor: (@files) ->
+						super()
+						@create_panel()
+
+					create_panel: -> @panels.push(new SpadePanel(@slctdFiles))
+
+					@observe 'slctdFiles', initial: []
+					@observe 'availClusterParams'
+					@observe 'slctdClusterParams', initial: []
+					@relate
+						availClusterParams: -> common_params @slctdFiles()
+
+					@collection 'panels', initial: []
+													
+				# /Spade
+
+				this.spade = new Spade [
+					{ name: "tube1.fcs", pN: ["cd3","cd4","cd8"] }
+					{ name: "tube2.fcs", pN: ["cd3","cd4","cd19"] }
+				]
+				ko.applyBindings this.spade
 
 			</script>
-
-			
-
 		</div>
+			
 	</body>
 </html>

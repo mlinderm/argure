@@ -1,10 +1,12 @@
 class Model
 	constructor: ->
 		@priCounter=0
-
+		@obsCounter=0
+		@cnCounter=0
 		# Convert observables into corresponding knockout observables
 		for name, options of @.constructor.observables ? {}
 			do (name, options) =>  # Create closure around each observable's name and options
+				id = @obsCounter++
 				state    = ko.observable options.initial
 				priority = ko.observable 0
 				argure_observable = ko.dependentObservable
@@ -14,7 +16,6 @@ class Model
 						state(value)
 						return null
 					owner: @
-			
 				argure_observable.state = state
 				argure_observable.priority = priority
 				@[name] = argure_observable
@@ -44,12 +45,31 @@ class Model
 		@_methods = []
 		@constraints = []
 		for constraint in @.constructor.relations ? []
-			idx = @constraints.push new Argure.Constraint constraint
+			idx = @constraints.push new Argure.Constraint constraint, @cnCounter++
 			for method in @constraints[idx-1].methods
 				do (method) =>
 					@_methods.push ko.dependentObservable ->
 						@[method.output].state method.body.apply(this, (ko.utils.unwrapObservable(@[name]) for name in method.inputs))
 					, @
+
+		@notifyObs = (obs,priority) ->
+			@[obs].priority = priority
+			for cn in @[obs].cnToNotify
+				@notifyCN(cn)
+
+		@notifyCn = (cn) ->
+			for method in cn.methods
+				minPri = Infinity
+				minMethod = undefined
+				if @[method.output].priority < minPri
+					minPri = @[method.output].priority
+					minMethod = method
+			if minMethod != undefined
+				cnGraph.add(cn,method)
+				cnGraph.detectCycle()
+				@notifyObs(method.output)
+
+	
 
 	@observe: (name, options=undefined) ->
 		@observables ?= {}

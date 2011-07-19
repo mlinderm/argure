@@ -14,11 +14,12 @@
 		return block(target, top);
 	};
 	
-	
+
+	//= require "../../build/javascripts/argure/constraints.js"
 	//= require "../../build/javascripts/argure/model.js"
 	//= require "../../build/javascripts/argure/bindings.js"
 
 
 }).call(this);
 
-//= require "../../vendor/coffee-script.js"
+//= require "../../vendor/coffee-script-debug.js"

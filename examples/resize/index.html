@@ -19,18 +19,23 @@
 
 				<label for="absHeight">Absolute Height</label>
 				<input type="text" id="absHeight" data-bind="value: absHeight"/>
+				<span data-bind="text: absHeight.priority"></span>
 				<br />
 				<label for="relHeight">Relative Height</label>
 				<input type="text" id="relHeight" data-bind="value: relHeight"/>
+				<span data-bind="text: relHeight.priority"></span>
 				<br />
 				<label for="absWidth">Absolute Width</label>
 				<input type="text" id="absWidth" data-bind="value: absWidth"/>
+				<span data-bind="text: absWidth.priority"></span>
 				<br />
 				<label for="relWidth">Relative Width</label>
 				<input type="text" id="relWidth" data-bind="value: relWidth"/>
+				<span data-bind="text: relWidth.priority"></span>
 				<br />
 				<label for="ratio">Lock Ratio</label>
 				<input type="checkbox" id="ratio" data-bind="checked: ratio"/>
+				<span data-bind="text: ratio.priority"></span>
 
 			</form>
 
@@ -39,20 +44,23 @@
 					constructor: (@initHeight, @initWidth) ->
 						super()
 					@observe 'absHeight'
-					@observe 'relHeight', initial: 100 
+					@observe 'relHeight', initial: 100
 					@observe 'absWidth'
 					@observe 'relWidth', initial: 100
 					@observe 'ratio', initial: false
-					@relate
-						absHeight: -> (@relHeight() / 100.0) * @initHeight
-						relHeight: -> (@absHeight() / @initHeight) * 100.0
-					@relate
-						absWidth: -> (@relWidth() / 100.0) * @initWidth
-						relWidth: -> (@absWidth() / @initWidth) * 100.0
-					@relate	
-						relWidth: -> if @ratio() then @relHeight() else @relWidth()
-						relHeight: -> if @ratio() then @relWidth() else @relHeight()
+					
+					@relate (c) ->
+						c.method absHeight: ['relHeight', 'initHeight'], (r, i) -> (r / 100.0 * i)
+						c.method relHeight: ['absHeight', 'initHeight'], (a, i) -> (a / i) * 100.0
 
+					@relate (c) ->
+						c.method absWidth: ['relWidth', 'initWidth'], (r, i) -> (r / 100.0 * i)
+						c.method relWidth: ['absWidth', 'initWidth'], (a, i) -> (a / i) * 100.0
+
+					@relate (c) ->
+						c.method relWidth: ['relHeight', 'relWidth', 'ratio'], (h, w, r) -> if r then h else w
+						c.method relHeight: ['relHeight', 'relWidth', 'ratio'], (h, w, r) -> if r then w else h
+	
 				this.resizer = new Resizer(1000, 1000)
 				ko.applyBindings(this.resizer)
 			</script>
