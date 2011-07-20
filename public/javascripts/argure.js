@@ -61,11 +61,12 @@
       this.cnCounter = 0;
       _ref2 = (_ref = this.constructor.observables) != null ? _ref : {};
       _fn = __bind(function(name, options) {
-        var argure_observable, cnToNotify, id, priority, state;
+        var argure_observable, cnToNotify, id, priority, state, wkStrength;
         id = this.obsCounter++;
         cnToNotify = [];
         state = ko.observable(options.initial);
         priority = ko.observable(0);
+        wkStrength = 0;
         argure_observable = ko.dependentObservable({
           read: function() {
             return state();
@@ -73,6 +74,7 @@
           write: function(value) {
             var cn, _i, _len, _ref3;
             priority(++this.priCounter);
+            argure_observable.wkStrength = this.priCounter;
             state(value);
             _ref3 = this[name].cnToNotify;
             for (_i = 0, _len = _ref3.length; _i < _len; _i++) {
@@ -85,6 +87,7 @@
         });
         argure_observable.state = state;
         argure_observable.priority = priority;
+        argure_observable.wkStrength = wkStrength;
         argure_observable.id = id;
         argure_observable.cnToNotify = cnToNotify;
         return this[name] = argure_observable;
@@ -163,27 +166,27 @@
         return _results;
       };
       this.notifyCn = function(cn) {
-        var method, minMethod, minPri, name, oldMethod, oldPri, oldValue, subminPri, _k, _len3, _ref8;
+        var method, minMethod, minStr, name, oldMethod, oldStr, oldValue, subminStr, _k, _len3, _ref8;
         oldMethod = cn.currentMethod;
         if (oldMethod !== void 0) {
           oldValue = this[oldMethod.output].state();
-          oldPri = this[oldMethod.output].priority();
+          oldStr = this[oldMethod.output].wkStrength;
         }
-        minPri = Infinity;
-        subminPri = Infinity;
+        minStr = Infinity;
+        subminStr = Infinity;
         minMethod = void 0;
         _ref8 = cn.methods;
         for (_k = 0, _len3 = _ref8.length; _k < _len3; _k++) {
           method = _ref8[_k];
-          if (this[method.output].priority() < minPri) {
-            subminPri = minPri;
-            minPri = this[method.output].priority();
+          if (this[method.output].wkStrength < minStr) {
+            subminStr = minStr;
+            minStr = this[method.output].wkStrength;
             minMethod = method;
-          } else if (this[method.output].priority() < subminPri) {
-            subminPri = this[method.output].priority();
+          } else if (this[method.output].wkStrength < subminStr) {
+            subminStr = this[method.output].wkStrength;
           }
         }
-        if (minPri === oldPri) {
+        if (minStr === oldStr) {
           minMethod = oldMethod;
         }
         if (minMethod === void 0) {
@@ -200,12 +203,12 @@
             return _results;
           }).call(this)));
           if (minMethod === oldMethod) {
-            if (this[minMethod.output].state() === oldValue && subminPri === oldPri) {
+            if (this[minMethod.output].state() === oldValue && subminStr === oldStr) {
               return;
             }
           }
           cn.currentMethod = minMethod;
-          this[minMethod.output].priority(subminPri);
+          this[minMethod.output].wkStrength = subminStr;
           this.notifyObs(minMethod.output, cn);
         }
       };

@@ -10,10 +10,12 @@ class Model
 				cnToNotify = []
 				state    = ko.observable options.initial
 				priority = ko.observable 0
+				wkStrength = 0
 				argure_observable = ko.dependentObservable
 					read : -> state()
 					write: (value) ->
 						priority(++@priCounter)
+						argure_observable.wkStrength = @priCounter
 						state(value)
 						for cn in @[name].cnToNotify
 							@notifyCn(cn)
@@ -22,6 +24,7 @@ class Model
 
 				argure_observable.state = state
 				argure_observable.priority = priority
+				argure_observable.wkStrength = wkStrength
 				argure_observable.id = id
 				argure_observable.cnToNotify = cnToNotify
 				@[name] = argure_observable
@@ -72,18 +75,18 @@ class Model
 			oldMethod = cn.currentMethod
 			if(oldMethod!=undefined)
 				oldValue = @[oldMethod.output].state()
-				oldPri = @[oldMethod.output].priority()
-			minPri = Infinity
-			subminPri = Infinity
+				oldStr = @[oldMethod.output].wkStrength
+			minStr = Infinity
+			subminStr = Infinity
 			minMethod = undefined
 			for method in cn.methods
-				if @[method.output].priority() < minPri
-					subminPri = minPri
-					minPri = @[method.output].priority()
+				if @[method.output].wkStrength < minStr
+					subminStr = minStr
+					minStr = @[method.output].wkStrength
 					minMethod = method
-				else if @[method.output].priority() < subminPri
-					subminPri = @[method.output].priority()
-			if minPri == oldPri
+				else if @[method.output].wkStrength < subminStr
+					subminStr = @[method.output].wkStrength
+			if minStr == oldStr
 				minMethod = oldMethod # Try to keep the old one if possible
 			if minMethod == undefined
 				throw new Error("The graph is over constrainted.")
@@ -91,10 +94,10 @@ class Model
 				@[minMethod.output].state minMethod.body.apply(this, (ko.utils.unwrapObservable(@[name]) for name in minMethod.inputs)) # Execute Method
 #				cnGraph.detectCycle()
 				if(minMethod == oldMethod)
-					if(@[minMethod.output].state() == oldValue and subminPri == oldPri)
+					if(@[minMethod.output].state() == oldValue and subminStr == oldStr)
 						return
 				cn.currentMethod = minMethod
-				@[minMethod.output].priority(subminPri)
+				@[minMethod.output].wkStrength = subminStr
 				@notifyObs(minMethod.output,cn)
 				return
 	
