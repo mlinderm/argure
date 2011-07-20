@@ -55,17 +55,18 @@ class Model
 			for method in @constraints[idx-1].methods
 				do (method) =>
 					for input in method.inputs
-						if @[input].cnToNotify != undefined and @[input].cnToNotify.indexOf(constraint)==-1
+						if @[input].cnToNotify != undefined and @[input].cnToNotify.indexOf(@constraints[idx-1])==-1
 							@[input].cnToNotify.push(@constraints[idx-1])
-					if @[method.output].cnToNotify != undefined and @[method.output].cnToNotify.indexOf(constraint)==-1
+					if @[method.output].cnToNotify != undefined and @[method.output].cnToNotify.indexOf(@constraints[idx-1])==-1
 						@[method.output].cnToNotify.push(@constraints[idx-1])
 #					@_methods.push ko.dependentObservable ->
 #						@[method.output].state method.body.apply(this, (ko.utils.unwrapObservable(@[name]) for name in method.inputs))
 #					, @
 
-		@notifyObs = (obs) ->
+		@notifyObs = (obs,preCn) ->
 			for cn in @[obs].cnToNotify
-				@notifyCN(cn)
+				if cn != preCn
+					@notifyCn(cn)
 
 		@notifyCn = (cn) ->
 			oldMethod = cn.currentMethod
@@ -73,22 +74,28 @@ class Model
 				oldValue = @[oldMethod.output].state()
 				oldPri = @[oldMethod.output].priority()
 			minPri = Infinity
+			subminPri = Infinity
 			minMethod = undefined
 			for method in cn.methods
 				if @[method.output].priority() < minPri
+					subminPri = minPri
 					minPri = @[method.output].priority()
 					minMethod = method
+				else if @[method.output].priority() < subminPri
+					subminPri = @[method.output].priority()
+			if minPri == oldPri
+				minMethod = oldMethod # Try to keep the old one if possible
 			if minMethod == undefined
 				throw new Error("The graph is over constrainted.")
 			else
-				@[minMethod.output].state minMethod.body.apply(this, (ko.utils.unwrapObservable(@[name]) for name in minMethod.inputs))
+				@[minMethod.output].state minMethod.body.apply(this, (ko.utils.unwrapObservable(@[name]) for name in minMethod.inputs)) # Execute Method
 #				cnGraph.detectCycle()
 				if(minMethod == oldMethod)
-					if(@[minMethod.output].state() == oldValue and minPri == oldPri)
+					if(@[minMethod.output].state() == oldValue and subminPri == oldPri)
 						return
 				cn.currentMethod = minMethod
-				@[minMethod.output].priority(minPri)
-				@notifyObs(minMethod.output)
+				@[minMethod.output].priority(subminPri)
+				@notifyObs(minMethod.output,cn)
 				return
 	
 

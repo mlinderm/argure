@@ -139,11 +139,11 @@
           _ref8 = method.inputs;
           for (_k = 0, _len3 = _ref8.length; _k < _len3; _k++) {
             input = _ref8[_k];
-            if (this[input].cnToNotify !== void 0 && this[input].cnToNotify.indexOf(constraint) === -1) {
+            if (this[input].cnToNotify !== void 0 && this[input].cnToNotify.indexOf(this.constraints[idx - 1]) === -1) {
               this[input].cnToNotify.push(this.constraints[idx - 1]);
             }
           }
-          if (this[method.output].cnToNotify !== void 0 && this[method.output].cnToNotify.indexOf(constraint) === -1) {
+          if (this[method.output].cnToNotify !== void 0 && this[method.output].cnToNotify.indexOf(this.constraints[idx - 1]) === -1) {
             return this[method.output].cnToNotify.push(this.constraints[idx - 1]);
           }
         }, this);
@@ -152,32 +152,39 @@
           _fn3(method);
         }
       }
-      this.notifyObs = function(obs) {
+      this.notifyObs = function(obs, preCn) {
         var cn, _k, _len3, _ref8, _results;
         _ref8 = this[obs].cnToNotify;
         _results = [];
         for (_k = 0, _len3 = _ref8.length; _k < _len3; _k++) {
           cn = _ref8[_k];
-          _results.push(this.notifyCN(cn));
+          _results.push(cn !== preCn ? this.notifyCn(cn) : void 0);
         }
         return _results;
       };
       this.notifyCn = function(cn) {
-        var method, minMethod, minPri, name, oldMethod, oldPri, oldValue, _k, _len3, _ref8;
+        var method, minMethod, minPri, name, oldMethod, oldPri, oldValue, subminPri, _k, _len3, _ref8;
         oldMethod = cn.currentMethod;
         if (oldMethod !== void 0) {
           oldValue = this[oldMethod.output].state();
           oldPri = this[oldMethod.output].priority();
         }
         minPri = Infinity;
+        subminPri = Infinity;
         minMethod = void 0;
         _ref8 = cn.methods;
         for (_k = 0, _len3 = _ref8.length; _k < _len3; _k++) {
           method = _ref8[_k];
           if (this[method.output].priority() < minPri) {
+            subminPri = minPri;
             minPri = this[method.output].priority();
             minMethod = method;
+          } else if (this[method.output].priority() < subminPri) {
+            subminPri = this[method.output].priority();
           }
+        }
+        if (minPri === oldPri) {
+          minMethod = oldMethod;
         }
         if (minMethod === void 0) {
           throw new Error("The graph is over constrainted.");
@@ -193,13 +200,13 @@
             return _results;
           }).call(this)));
           if (minMethod === oldMethod) {
-            if (this[minMethod.output].state() === oldValue && minPri === oldPri) {
+            if (this[minMethod.output].state() === oldValue && subminPri === oldPri) {
               return;
             }
           }
           cn.currentMethod = minMethod;
-          this[minMethod.output].priority(minPri);
-          this.notifyObs(minMethod.output);
+          this[minMethod.output].priority(subminPri);
+          this.notifyObs(minMethod.output, cn);
         }
       };
     }
