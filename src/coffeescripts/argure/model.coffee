@@ -2,44 +2,36 @@ class Model
 	constructor: ->
 		@priCounter=0
 
+		build_observable = (observable_kind, initial_value) ->
+			state    = observable_kind initial_value
+			priority = ko.observable 0
+			argure_observable = ko.dependentObservable
+				read : -> state()
+				write: (value) ->
+					priority(++@priCounter)
+					state(value)
+					return null
+				owner: @
+			argure_observable.state = state
+			argure_observable.priority = priority
+			return argure_observable
+
 		# Convert observables into corresponding knockout observables
 		for name, options of @.constructor.observables ? {}
-			do (name, options) =>  # Create closure around each observable's name and options
-				state    = ko.observable options.initial
-				priority = ko.observable 0
-				argure_observable = ko.dependentObservable
-					read : -> state()
-					write: (value) ->
-						priority(++@priCounter)
-						state(value)
-						return null
-					owner: @
-				
-				argure_observable.state = state
-				argure_observable.priority = priority
-				@[name] = argure_observable
+			@[name] = build_observable.call @, ko.observable, options.initial
+			true
 
 		# Convert collections into corresponding knockout observable arrays
 		for name, options of @.constructor.collections ? {}
-			do (name, options) =>
-				state = ko.observableArray options.initial
-				priority = ko.observable 0
-				argure_observable = ko.dependentObservable
-					read: -> state()
-					write: (value) ->
-						priority(++@priCounter)
-						state(value)
-						return null
-					owner: @
-				
-				for method in ["pop", "push", "reverse", "shift", "sort", "splice", "unshift", "slice", "remove", "removeAll", "destroy", "destroyAll", "indexOf"]
-					do(method) ->
-						argure_observable[method] = ->
-							state[method].apply state, arguments
-				argure_observable.state = state
-				argure_observable.priority = priority
-				@[name] = argure_observable
-
+			observable = build_observable.call @, ko.observableArray, options.initial
+			for method in ["pop", "push", "reverse", "shift", "sort", "splice", "unshift", "slice", "remove", "removeAll", "destroy", "destroyAll", "indexOf"]
+				do (observable, method) ->
+					observable[method] = -> 
+						observable.state[method].apply observable.state, arguments
+				true
+			@[name] = observable
+			true
+								
 		# Create dependent observables for relations (this is a crude way to do this)
 		@_methods = []
 		@constraints = []

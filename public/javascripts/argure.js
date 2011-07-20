@@ -106,12 +106,11 @@
   var __bind = function(fn, me){ return function(){ return fn.apply(me, arguments); }; };
   Model = (function() {
     function Model() {
-      var constraint, idx, method, name, options, _fn, _fn2, _fn3, _i, _j, _len, _len2, _ref, _ref2, _ref3, _ref4, _ref5, _ref6, _ref7;
+      var build_observable, constraint, idx, method, name, observable, options, _fn, _fn2, _i, _j, _k, _len, _len2, _len3, _ref, _ref2, _ref3, _ref4, _ref5, _ref6, _ref7, _ref8;
       this.priCounter = 0;
-      _ref2 = (_ref = this.constructor.observables) != null ? _ref : {};
-      _fn = __bind(function(name, options) {
+      build_observable = function(observable_kind, initial_value) {
         var argure_observable, priority, state;
-        state = ko.observable(options.initial);
+        state = observable_kind(initial_value);
         priority = ko.observable(0);
         argure_observable = ko.dependentObservable({
           read: function() {
@@ -126,71 +125,57 @@
         });
         argure_observable.state = state;
         argure_observable.priority = priority;
-        return this[name] = argure_observable;
-      }, this);
+        return argure_observable;
+      };
+      _ref2 = (_ref = this.constructor.observables) != null ? _ref : {};
       for (name in _ref2) {
         options = _ref2[name];
-        _fn(name, options);
+        this[name] = build_observable.call(this, ko.observable, options.initial);
+        true;
       }
       _ref4 = (_ref3 = this.constructor.collections) != null ? _ref3 : {};
-      _fn2 = __bind(function(name, options) {
-        var argure_observable, method, priority, state, _fn3, _i, _len, _ref5;
-        state = ko.observableArray(options.initial);
-        priority = ko.observable(0);
-        argure_observable = ko.dependentObservable({
-          read: function() {
-            return state();
-          },
-          write: function(value) {
-            priority(++this.priCounter);
-            state(value);
-            return null;
-          },
-          owner: this
-        });
+      for (name in _ref4) {
+        options = _ref4[name];
+        observable = build_observable.call(this, ko.observableArray, options.initial);
         _ref5 = ["pop", "push", "reverse", "shift", "sort", "splice", "unshift", "slice", "remove", "removeAll", "destroy", "destroyAll", "indexOf"];
-        _fn3 = function(method) {
-          return argure_observable[method] = function() {
-            return state[method].apply(state, arguments);
+        _fn = function(observable, method) {
+          return observable[method] = function() {
+            return observable.state[method].apply(observable.state, arguments);
           };
         };
         for (_i = 0, _len = _ref5.length; _i < _len; _i++) {
           method = _ref5[_i];
-          _fn3(method);
+          _fn(observable, method);
+          true;
         }
-        argure_observable.state = state;
-        argure_observable.priority = priority;
-        return this[name] = argure_observable;
-      }, this);
-      for (name in _ref4) {
-        options = _ref4[name];
-        _fn2(name, options);
+        this[name] = observable;
+        true;
       }
       this._methods = [];
       this.constraints = [];
-      _ref6 = (_ref5 = this.constructor.relations) != null ? _ref5 : [];
-      for (_i = 0, _len = _ref6.length; _i < _len; _i++) {
-        constraint = _ref6[_i];
+      _ref7 = (_ref6 = this.constructor.relations) != null ? _ref6 : [];
+      for (_j = 0, _len2 = _ref7.length; _j < _len2; _j++) {
+        constraint = _ref7[_j];
         idx = this.constraints.push(new Argure.Constraint(constraint));
-        _ref7 = this.constraints[idx - 1].methods;
-        _fn3 = __bind(function(method) {
+        _ref8 = this.constraints[idx - 1].methods;
+        _fn2 = __bind(function(method) {
           return this._methods.push(ko.dependentObservable(function() {
             var name;
             return this[method.output].state(method.body.apply(this, (function() {
-              var _k, _len3, _ref8, _results;
-              _ref8 = method.inputs;
+              var _l, _len4, _ref9, _results;
+              _ref9 = method.inputs;
               _results = [];
-              for (_k = 0, _len3 = _ref8.length; _k < _len3; _k++) {
-                name = _ref8[_k];
+              for (_l = 0, _len4 = _ref9.length; _l < _len4; _l++) {
+                name = _ref9[_l];
                 _results.push(ko.utils.unwrapObservable(this[name]));
               }
               return _results;
             }).call(this)));
           }, this));
         }, this);
-        for (_j = 0, _len2 = _ref7.length; _j < _len2; _j++) {
-          method = _ref7[_j];
-          _fn3(method);
+        for (_k = 0, _len3 = _ref8.length; _k < _len3; _k++) {
+          method = _ref8[_k];
+          _fn2(method);
         }
       }
     }
