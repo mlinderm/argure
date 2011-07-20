@@ -91,15 +91,25 @@ class Model
 			if minMethod == undefined
 				throw new Error("The graph is over constrainted.")
 			else
+				if minMethod.condition != undefined
+					if minMethod.condition.apply(this, (ko.utils.unwrapObservable(@[name]) for name in minMethod.inputs)) != true # Execute Condition
+						if cn.currentMethod ==undefined
+							return null
+						cn.currentMethod = undefined
+						@[oldMethod.output].wkStrength = @[oldMethod.output].priority()
+						@notifyObs(oldMethod.output, cn)
+						return null
 				@[minMethod.output].state minMethod.body.apply(this, (ko.utils.unwrapObservable(@[name]) for name in minMethod.inputs)) # Execute Method
 #				cnGraph.detectCycle()
 				if(minMethod == oldMethod)
 					if(@[minMethod.output].state() == oldValue and subminStr == oldStr)
-						return
+						return null
 				cn.currentMethod = minMethod
 				@[minMethod.output].wkStrength = subminStr
 				@notifyObs(minMethod.output,cn)
-				return
+				return null
+			
+				
 	
 
 	@observe: (name, options=undefined) ->
@@ -116,6 +126,7 @@ class Model
 		@relations ?= []
 		throw new Error("You must specify constraint methods") if typeof methods != "function"
 		@relations.push(methods)
+
 
 namespace 'Argure', (exports) ->
 	exports.Model = Model

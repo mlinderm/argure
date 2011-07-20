@@ -17,10 +17,11 @@
 (function() {
   var Constraint, Method;
   Method = (function() {
-    function Method(inputs, output, body) {
+    function Method(inputs, output, body, condition) {
       this.inputs = inputs;
       this.output = output;
       this.body = body;
+      this.condition = condition;
     }
     return Method;
   })();
@@ -35,14 +36,14 @@
         throw new Error("Only object-based constraints are supported");
       }
     }
-    Constraint.prototype.method = function(args_or_code, body) {
+    Constraint.prototype.method = function(args_or_code, body, condition) {
       var i, inputs, o, output, _ref, _ref2;
       _ref = [void 0, []], output = _ref[0], inputs = _ref[1];
       for (o in args_or_code) {
         i = args_or_code[o];
         _ref2 = [o, i], output = _ref2[0], inputs = _ref2[1];
       }
-      return this.methods.push(new Method(inputs, output, body));
+      return this.methods.push(new Method(inputs, output, body, condition));
     };
     return Constraint;
   })();
@@ -192,6 +193,26 @@
         if (minMethod === void 0) {
           throw new Error("The graph is over constrainted.");
         } else {
+          if (minMethod.condition !== void 0) {
+            if (minMethod.condition.apply(this, (function() {
+              var _l, _len4, _ref9, _results;
+              _ref9 = minMethod.inputs;
+              _results = [];
+              for (_l = 0, _len4 = _ref9.length; _l < _len4; _l++) {
+                name = _ref9[_l];
+                _results.push(ko.utils.unwrapObservable(this[name]));
+              }
+              return _results;
+            }).call(this)) !== true) {
+              if (cn.currentMethod === void 0) {
+                return null;
+              }
+              cn.currentMethod = void 0;
+              this[oldMethod.output].wkStrength = this[oldMethod.output].priority();
+              this.notifyObs(oldMethod.output, cn);
+              return null;
+            }
+          }
           this[minMethod.output].state(minMethod.body.apply(this, (function() {
             var _l, _len4, _ref9, _results;
             _ref9 = minMethod.inputs;
@@ -204,12 +225,13 @@
           }).call(this)));
           if (minMethod === oldMethod) {
             if (this[minMethod.output].state() === oldValue && subminStr === oldStr) {
-              return;
+              return null;
             }
           }
           cn.currentMethod = minMethod;
           this[minMethod.output].wkStrength = subminStr;
           this.notifyObs(minMethod.output, cn);
+          return null;
         }
       };
     }
