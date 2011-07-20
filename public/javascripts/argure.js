@@ -162,44 +162,54 @@
         _results = [];
         for (_k = 0, _len3 = _ref8.length; _k < _len3; _k++) {
           cn = _ref8[_k];
-          _results.push(cn !== preCn ? this.notifyCn(cn) : void 0);
+          _results.push(cn !== preCn ? this.notifyCn(cn, obs) : void 0);
         }
         return _results;
       };
-      this.notifyCn = function(cn) {
-        var method, minMethod, minStr, name, oldMethod, oldStr, oldValue, subminStr, _k, _len3, _ref8;
+      this.notifyCn = function(cn, preObs) {
+        var method, minMethod, minStr, name, newStr, oldMethod, oldStr, oldValue, _k, _l, _len3, _len4, _ref8, _ref9;
         oldMethod = cn.currentMethod;
         if (oldMethod !== void 0) {
           oldValue = this[oldMethod.output].state();
           oldStr = this[oldMethod.output].wkStrength;
         }
         minStr = Infinity;
-        subminStr = Infinity;
         minMethod = void 0;
         _ref8 = cn.methods;
         for (_k = 0, _len3 = _ref8.length; _k < _len3; _k++) {
           method = _ref8[_k];
           if (this[method.output].wkStrength < minStr) {
-            subminStr = minStr;
             minStr = this[method.output].wkStrength;
             minMethod = method;
-          } else if (this[method.output].wkStrength < subminStr) {
-            subminStr = this[method.output].wkStrength;
           }
         }
         if (minStr === oldStr) {
           minMethod = oldMethod;
+        }
+        newStr = Infinity;
+        if (minMethod !== oldMethod && oldMethod !== void 0 && oldMethod.output !== preObs) {
+          this[oldMethod.output].wkStrength = this[oldMethod.output].priority();
+        }
+        _ref9 = cn.methods;
+        for (_l = 0, _len4 = _ref9.length; _l < _len4; _l++) {
+          method = _ref9[_l];
+          if (method === minMethod) {
+            continue;
+          }
+          if (this[method.output].wkStrength < newStr) {
+            newStr = this[method.output].wkStrength;
+          }
         }
         if (minMethod === void 0) {
           throw new Error("The graph is over constrainted.");
         } else {
           if (minMethod.condition !== void 0) {
             if (minMethod.condition.apply(this, (function() {
-              var _l, _len4, _ref9, _results;
-              _ref9 = minMethod.inputs;
+              var _len5, _m, _ref10, _results;
+              _ref10 = minMethod.inputs;
               _results = [];
-              for (_l = 0, _len4 = _ref9.length; _l < _len4; _l++) {
-                name = _ref9[_l];
+              for (_m = 0, _len5 = _ref10.length; _m < _len5; _m++) {
+                name = _ref10[_m];
                 _results.push(ko.utils.unwrapObservable(this[name]));
               }
               return _results;
@@ -214,22 +224,22 @@
             }
           }
           this[minMethod.output].state(minMethod.body.apply(this, (function() {
-            var _l, _len4, _ref9, _results;
-            _ref9 = minMethod.inputs;
+            var _len5, _m, _ref10, _results;
+            _ref10 = minMethod.inputs;
             _results = [];
-            for (_l = 0, _len4 = _ref9.length; _l < _len4; _l++) {
-              name = _ref9[_l];
+            for (_m = 0, _len5 = _ref10.length; _m < _len5; _m++) {
+              name = _ref10[_m];
               _results.push(ko.utils.unwrapObservable(this[name]));
             }
             return _results;
           }).call(this)));
           if (minMethod === oldMethod) {
-            if (this[minMethod.output].state() === oldValue && subminStr === oldStr) {
+            if (this[minMethod.output].state() === oldValue && newStr === oldStr) {
               return null;
             }
           }
           cn.currentMethod = minMethod;
-          this[minMethod.output].wkStrength = subminStr;
+          this[minMethod.output].wkStrength = newStr;
           this.notifyObs(minMethod.output, cn);
           return null;
         }
