@@ -1,5 +1,54 @@
 class Model
 	constructor: ->
+		@notifyObs = (obs,preCn) ->
+			for cn in @[obs].cnToNotify
+				if cn != preCn
+					@notifyCn(cn,obs)
+
+		@notifyCn = (cn,preObs) ->
+			oldMethod = cn.currentMethod
+			if(oldMethod!=undefined)
+				oldValue = @[oldMethod.output].state()
+				oldStr = @[oldMethod.output].wkStrength
+			minStr = Infinity
+			minMethod = undefined
+			for method in cn.methods
+				if @[method.output].wkStrength < minStr
+					minStr = @[method.output].wkStrength
+					minMethod = method
+			if minStr == oldStr
+				minMethod = oldMethod # Try to keep the old one if possible
+			newStr = Infinity
+			if minMethod != oldMethod and oldMethod != undefined and oldMethod.output != preObs
+				@[oldMethod.output].wkStrength = @[oldMethod.output].priority() # The original output is free now, so its stay constraint is redirected,
+									 											# so its walk about strength should be equal to its priority
+			for method in cn.methods
+				if method == minMethod
+					continue
+				if @[method.output].wkStrength < newStr
+					newStr = @[method.output].wkStrength
+
+			if minMethod == undefined
+				throw new Error("The graph is over constrainted.")
+			else
+				if minMethod.condition != undefined
+					if minMethod.condition.apply(this, (ko.utils.unwrapObservable(@[name]) for name in minMethod.inputs)) != true # Execute Condition
+						if cn.currentMethod ==undefined
+							return null
+						cn.currentMethod = undefined
+						@[oldMethod.output].wkStrength = @[oldMethod.output].priority()
+						@notifyObs(oldMethod.output, cn)
+						return null
+				@[minMethod.output].state minMethod.body.apply(this, (ko.utils.unwrapObservable(@[name]) for name in minMethod.inputs)) # Execute Method
+#				cnGraph.detectCycle()
+				if(minMethod == oldMethod)
+					if(@[minMethod.output].state() == oldValue and newStr == oldStr)
+						return null
+				cn.currentMethod = minMethod
+				@[minMethod.output].wkStrength = newStr
+				@notifyObs(minMethod.output,cn)
+				return null
+
 		@priCounter=0
 		@obsCounter=0
 		@cnCounter=0
@@ -66,55 +115,11 @@ class Model
 #						@[method.output].state method.body.apply(this, (ko.utils.unwrapObservable(@[name]) for name in method.inputs))
 #					, @
 
-		@notifyObs = (obs,preCn) ->
-			for cn in @[obs].cnToNotify
-				if cn != preCn
-					@notifyCn(cn,obs)
-
-		@notifyCn = (cn,preObs) ->
-			oldMethod = cn.currentMethod
-			if(oldMethod!=undefined)
-				oldValue = @[oldMethod.output].state()
-				oldStr = @[oldMethod.output].wkStrength
-			minStr = Infinity
-			minMethod = undefined
-			for method in cn.methods
-				if @[method.output].wkStrength < minStr
-					minStr = @[method.output].wkStrength
-					minMethod = method
-			if minStr == oldStr
-				minMethod = oldMethod # Try to keep the old one if possible
-			newStr = Infinity
-			if minMethod != oldMethod and oldMethod != undefined and oldMethod.output != preObs
-				@[oldMethod.output].wkStrength = @[oldMethod.output].priority() # The original output is free now, so its stay constraint is redirected,
-									 											# so its walk about strength should be equal to its priority
-			for method in cn.methods
-				if method == minMethod
-					continue
-				if @[method.output].wkStrength < newStr
-					newStr = @[method.output].wkStrength
-
-			if minMethod == undefined
-				throw new Error("The graph is over constrainted.")
-			else
-				if minMethod.condition != undefined
-					if minMethod.condition.apply(this, (ko.utils.unwrapObservable(@[name]) for name in minMethod.inputs)) != true # Execute Condition
-						if cn.currentMethod ==undefined
-							return null
-						cn.currentMethod = undefined
-						@[oldMethod.output].wkStrength = @[oldMethod.output].priority()
-						@notifyObs(oldMethod.output, cn)
-						return null
-				@[minMethod.output].state minMethod.body.apply(this, (ko.utils.unwrapObservable(@[name]) for name in minMethod.inputs)) # Execute Method
-#				cnGraph.detectCycle()
-				if(minMethod == oldMethod)
-					if(@[minMethod.output].state() == oldValue and newStr == oldStr)
-						return null
-				cn.currentMethod = minMethod
-				@[minMethod.output].wkStrength = newStr
-				@notifyObs(minMethod.output,cn)
-				return null
-			
+		for name, options of @.constructor.observables
+			do (name, options) =>  # Create closure around each observable's name and options
+				for cn in @[name].cnToNotify
+					@notifyCn(cn)
+				
 				
 	
 
@@ -136,3 +141,4 @@ class Model
 
 namespace 'Argure', (exports) ->
 	exports.Model = Model
+
