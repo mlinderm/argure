@@ -11,15 +11,15 @@
 	<body>
 		<div>	
 			<!-- "view" for created panels -->
-			<script id="panelTemplate" type="text/html" charset="utf-8">
+			<script id="panelsTemplate" type="text/html" charset="utf-8">
 				<li>
 					<form>
 						<label for="panelFiles">Select Panel Files:</label>
-						<select id="panelFiles" data-bind='multiSelect: panelFiles, optionsText: "name"' multiple=multiple></select>
+						<select id="panelFiles" data-bind='collectionMultiSelect: panelFiles, optionsText: "name"' multiple=multiple></select>
 						<label for="panelRefFiles">Select Reference Files:</label>
-						<select id="panelRefFiles" data-bind='multiSelect: refFiles, optionsText: "name"' multiple=multiple></select>
+						<select id="panelRefFiles" data-bind='collectionMultiSelect: refFiles, optionsText: "name"' multiple=multiple></select>
 						<label for="panelRefParams">Select Fold Change Parameters:</label>
-						<select id="panelRefParams" data-bind='multiSelect: foldParams' multiple=multiple></select>
+						<select id="panelRefParams" data-bind='collectionMultiSelect: foldParams' multiple=multiple></select>
 						<button data-bind="click: function() { $item.parentCollection.remove(this); }">Delete Panel</button>
 					</form>
 				</li>
@@ -29,11 +29,11 @@
 				<h2>Setup Spade Analysis</h2>
 				<form>
 					<label for="slctdFiles">Select Files for Analysis:</label>
-					<select id="slctdFiles" data-bind='multiSelect: files, optionsText: "name"' multiple="multiple"></select>
+					<select id="slctdFiles" data-bind='collectionMultiSelect: files, optionsText: "name"' multiple="multiple"></select>
 					<label for="clustParams">Select Clustering Parameters:</label>
-					<select id="clustParams" data-bind='multiSelect: clusterParams' multiple=multiple ></select>
+					<select id="clustParams" data-bind='collectionMultiSelect: clusterParams' multiple=multiple ></select>
 					<h3>Panels</h3>
-					<ul data-bind='template: { name: "panelTemplate", foreach: panels, templateOptions: { parentCollection: panels } }' ></ul>
+					<ul data-bind='collectionTemplate: panels' ></ul>
 					<button data-bind="click: create_panel">Create Another Panel</button>
 				</form>
 			</script>
@@ -56,9 +56,9 @@
 
 					@include Argure.Extensions.Set
 
-					@observeMultiSelect 'panelFiles'
-					@observeMultiSelect 'refFiles'
-					@observeMultiSelect 'foldParams'
+					@collectionMultiSelect 'panelFiles'
+					@collectionMultiSelect 'refFiles'
+					@collectionMultiSelect 'foldParams'
 
 					@relate (c) ->
 						c.method 'refFiles_opts = panelFiles_slct'
@@ -79,8 +79,8 @@
 
 					@include Argure.Extensions.Set
 
-					@observeMultiSelect 'files'
-					@observeMultiSelect 'clusterParams'
+					@collectionMultiSelect 'files'
+					@collectionMultiSelect 'clusterParams'
 					@relate (c) ->
 						c.method 'clusterParams_opts = common_params(files_slct)'
 

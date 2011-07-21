@@ -2,7 +2,7 @@ class Model
 	constructor: ->
 		@_priCounter=0
 
-		build_observable = (observable_kind, initial_value) ->
+		build_observable = (name, observable_kind, initial_value) ->
 			state    = observable_kind initial_value
 			priority = ko.observable 0
 			argure_observable = ko.dependentObservable
@@ -12,6 +12,7 @@ class Model
 					state(value)
 					return null
 				owner: @
+			argure_observable.observableName = name
 			argure_observable.state = state
 			argure_observable.priority = priority
 			return argure_observable
@@ -19,13 +20,13 @@ class Model
 		# Convert observables into corresponding knockout observables
 		for name, options of @.constructor.observables ? {}
 			continue if @[name]
-			@[name] = build_observable.call @, ko.observable, options.initial
+			@[name] = build_observable.call @, name, ko.observable, options.initial
 			true
 
 		# Convert collections into corresponding knockout observable arrays
 		for name, options of @.constructor.collections ? {}
 			continue if @[name]
-			observable = build_observable.call @, ko.observableArray, options.initial
+			observable = build_observable.call @, name, ko.observableArray, options.initial
 			for method in ["pop", "push", "reverse", "shift", "sort", "splice", "unshift", "slice", "remove", "removeAll", "destroy", "destroyAll", "indexOf"]
 				do (observable, method) ->
 					observable[method] = -> 

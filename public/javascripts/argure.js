@@ -108,7 +108,7 @@
     function Model() {
       var build_observable, constraint, fn, idx, method, name, observable, options, _fn, _fn2, _i, _j, _k, _l, _len, _len2, _len3, _len4, _ref, _ref10, _ref2, _ref3, _ref4, _ref5, _ref6, _ref7, _ref8, _ref9;
       this._priCounter = 0;
-      build_observable = function(observable_kind, initial_value) {
+      build_observable = function(name, observable_kind, initial_value) {
         var argure_observable, priority, state;
         state = observable_kind(initial_value);
         priority = ko.observable(0);
@@ -123,6 +123,7 @@
           },
           owner: this
         });
+        argure_observable.observableName = name;
         argure_observable.state = state;
         argure_observable.priority = priority;
         return argure_observable;
@@ -133,7 +134,7 @@
         if (this[name]) {
           continue;
         }
-        this[name] = build_observable.call(this, ko.observable, options.initial);
+        this[name] = build_observable.call(this, name, ko.observable, options.initial);
         true;
       }
       _ref4 = (_ref3 = this.constructor.collections) != null ? _ref3 : {};
@@ -142,7 +143,7 @@
         if (this[name]) {
           continue;
         }
-        observable = build_observable.call(this, ko.observableArray, options.initial);
+        observable = build_observable.call(this, name, ko.observableArray, options.initial);
         _ref5 = ["pop", "push", "reverse", "shift", "sort", "splice", "unshift", "slice", "remove", "removeAll", "destroy", "destroyAll", "indexOf"];
         _fn = function(observable, method) {
           return observable[method] = function() {
@@ -257,11 +258,11 @@
   var apply_set_extensions;
   var __bind = function(fn, me){ return function(){ return fn.apply(me, arguments); }; };
   apply_set_extensions = function() {
-    var _base, _ref, _ref2;
-        if ((_ref = this.observeMultiSelect) != null) {
+    var _base, _base2, _ref, _ref2, _ref3;
+        if ((_ref = this.collectionMultiSelect) != null) {
       _ref;
     } else {
-      this.observeMultiSelect = function(name, options) {
+      this.collectionMultiSelect = function(name, options) {
         var _ref2;
         if (options == null) {
           options = void 0;
@@ -304,21 +305,40 @@
         });
       };
     };
-    return (_ref2 = (_base = ko.bindingHandlers).multiSelect) != null ? _ref2 : _base.multiSelect = {
-      init: function(element, valueAccessor, allBindingsAccessor, viewModel) {
-        ko.bindingHandlers.selectedOptions.init(element, (function() {
-          return valueAccessor().slct;
-        }), allBindingsAccessor, viewModel);
-        return null;
-      },
+        if ((_ref2 = (_base = ko.bindingHandlers).collectionMultiSelect) != null) {
+      _ref2;
+    } else {
+      _base.collectionMultiSelect = {
+        init: function(element, valueAccessor, allBindingsAccessor, viewModel) {
+          ko.bindingHandlers.selectedOptions.init(element, (function() {
+            return valueAccessor().slct;
+          }), allBindingsAccessor, viewModel);
+          return null;
+        },
+        update: function(element, valueAccessor, allBindingsAccessor, viewModel) {
+          ko.bindingHandlers.options.update(element, (function() {
+            return valueAccessor().opts;
+          }), allBindingsAccessor, viewModel);
+          ko.bindingHandlers.selectedOptions.update(element, (function() {
+            return valueAccessor().slct;
+          }), allBindingsAccessor, viewModel);
+          return null;
+        }
+      };
+    };
+    return (_ref3 = (_base2 = ko.bindingHandlers).collectionTemplate) != null ? _ref3 : _base2.collectionTemplate = {
       update: function(element, valueAccessor, allBindingsAccessor, viewModel) {
-        ko.bindingHandlers.options.update(element, (function() {
-          return valueAccessor().opts;
+        var value;
+        value = valueAccessor();
+        return ko.bindingHandlers.template.update(element, (function() {
+          return {
+            name: value.observableName + "Template",
+            foreach: value,
+            templateOptions: {
+              parentCollection: value
+            }
+          };
         }), allBindingsAccessor, viewModel);
-        ko.bindingHandlers.selectedOptions.update(element, (function() {
-          return valueAccessor().slct;
-        }), allBindingsAccessor, viewModel);
-        return null;
       }
     };
   };

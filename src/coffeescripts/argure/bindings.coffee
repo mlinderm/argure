@@ -2,7 +2,7 @@
 # Set Extensions
 #
 apply_set_extensions = ->
-	@observeMultiSelect ?= (name, options=undefined) ->
+	@collectionMultiSelect ?= (name, options=undefined) ->
 		@collection name+'_opts', initial: options?.initialOpts
 		@collection name+'_slct', initial: options?.initialSlct ? []
 		
@@ -25,7 +25,7 @@ apply_set_extensions = ->
 					null
 
 		
-	ko.bindingHandlers.multiSelect ?=
+	ko.bindingHandlers.collectionMultiSelect ?=
 		init: (element, valueAccessor, allBindingsAccessor, viewModel) ->
 			ko.bindingHandlers.selectedOptions.init(element, (-> valueAccessor().slct ), allBindingsAccessor, viewModel)
 			null
@@ -33,6 +33,16 @@ apply_set_extensions = ->
 			ko.bindingHandlers.options.update element, (-> valueAccessor().opts ), allBindingsAccessor, viewModel
 			ko.bindingHandlers.selectedOptions.update element, (-> valueAccessor().slct ), allBindingsAccessor, viewModel
 			null
+
+	# Automatically match observable object to template name, set foreach, etc.
+	ko.bindingHandlers.collectionTemplate ?=
+		update: (element, valueAccessor, allBindingsAccessor, viewModel) ->
+			value = valueAccessor()
+			ko.bindingHandlers.template.update element, (->
+				name: value.observableName + "Template"
+				foreach: value
+				templateOptions: { parentCollection: value }
+			), allBindingsAccessor, viewModel
 # /SetExtensions
 
 namespace 'Argure.Extensions', (exports) ->
