@@ -1,6 +1,6 @@
 class Model
 	constructor: ->
-		@priCounter=0
+		@_priCounter=0
 
 		build_observable = (observable_kind, initial_value) ->
 			state    = observable_kind initial_value
@@ -8,7 +8,7 @@ class Model
 			argure_observable = ko.dependentObservable
 				read : -> state()
 				write: (value) ->
-					priority(++@priCounter)
+					priority(++@_priCounter)
 					state(value)
 					return null
 				owner: @
@@ -18,11 +18,13 @@ class Model
 
 		# Convert observables into corresponding knockout observables
 		for name, options of @.constructor.observables ? {}
+			continue if @[name]
 			@[name] = build_observable.call @, ko.observable, options.initial
 			true
 
 		# Convert collections into corresponding knockout observable arrays
 		for name, options of @.constructor.collections ? {}
+			continue if @[name]
 			observable = build_observable.call @, ko.observableArray, options.initial
 			for method in ["pop", "push", "reverse", "shift", "sort", "splice", "unshift", "slice", "remove", "removeAll", "destroy", "destroyAll", "indexOf"]
 				do (observable, method) ->
@@ -34,15 +36,28 @@ class Model
 								
 		# Create dependent observables for relations (this is a crude way to do this)
 		@_methods = []
-		@constraints = []
+		@_constraints = []
 		for constraint in @.constructor.relations ? []
-			idx = @constraints.push new Argure.Constraint constraint
-			for method in @constraints[idx-1].methods
+			idx = @_constraints.push new Argure.Constraint constraint
+			for method in @_constraints[idx-1].methods
 				do (method) =>
 					@_methods.push ko.dependentObservable ->
 						@[method.output].state method.body.apply(this, (ko.utils.unwrapObservable(@[name]) for name in method.inputs))
 					, @	
 
+		# Apply delays
+		for fn in @.constructor._delays ? {}
+			fn.call(@)
+
+
+	@_delayed: (fn) ->
+		@_delays ?= []
+		@_delays.push(fn)
+
+	@include: (mixin) ->
+		throw new Error("Mixin must be a function") if typeof mixin != "function"
+		mixin.call @
+	
 	@observe: (name, options=undefined) ->
 		@observables ?= {}
 		throw new Error("Observable #{name} already exists") if @observables[name]?

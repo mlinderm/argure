@@ -15,11 +15,11 @@
 				<li>
 					<form>
 						<label for="panelFiles">Select Panel Files:</label>
-						<select id="panelFiles" data-bind='options: availPanelFiles, selectedOptions: slctdPanelFiles, optionsText: "name"' multiple=multiple></select>
+						<select id="panelFiles" data-bind='multiSelect: panelFiles, optionsText: "name"' multiple=multiple></select>
 						<label for="panelRefFiles">Select Reference Files:</label>
-						<select id="panelRefFiles" data-bind='options: slctdPanelFiles, selectedOptions: slctdRefFiles, optionsText: "name"' multiple=multiple></select>
+						<select id="panelRefFiles" data-bind='multiSelect: refFiles, optionsText: "name"' multiple=multiple></select>
 						<label for="panelRefParams">Select Fold Change Parameters:</label>
-						<select id="panelRefParams" data-bind='options: availFoldParams, selectedOptions: slctdFoldParams' multiple=multiple></select>
+						<select id="panelRefParams" data-bind='multiSelect: foldParams' multiple=multiple></select>
 						<button data-bind="click: function() { $item.parentCollection.remove(this); }">Delete Panel</button>
 					</form>
 				</li>
@@ -29,9 +29,9 @@
 				<h2>Setup Spade Analysis</h2>
 				<form>
 					<label for="slctdFiles">Select Files for Analysis:</label>
-					<select id="slctdFiles" data-bind='options: files, selectedOptions: slctdFiles, optionsText: "name"' multiple="multiple"></select>
+					<select id="slctdFiles" data-bind='multiSelect: files, optionsText: "name"' multiple="multiple"></select>
 					<label for="clustParams">Select Clustering Parameters:</label>
-					<select id="clustParams" data-bind='options: availClusterParams' multiple=multiple ></select>
+					<select id="clustParams" data-bind='multiSelect: clusterParams' multiple=multiple ></select>
 					<h3>Panels</h3>
 					<ul data-bind='template: { name: "panelTemplate", foreach: panels, templateOptions: { parentCollection: panels } }' ></ul>
 					<button data-bind="click: create_panel">Create Another Panel</button>
@@ -48,38 +48,41 @@
 			<script type="text/coffeescript" charset="utf-8">
 	
 				class SpadePanel extends Argure.Model
-					constructor: (@availPanelFiles) ->
+					constructor: (@panelFiles_opts) ->
 						super()
 
-					common_params: (files) ->	
+					common_params: (files) ->
 						if files.length > 0 then files.slice(1).reduce ((m,p) -> _.intersect(m,p.pN)), files[0].pN else []
 
-					@observe 'slctdPanelFiles', initial: []
-					@observe 'slctdRefFiles', initial: []
-					@observe 'availFoldParams'
-					@observe 'slctdFoldParams', initial: []
+					@include Argure.Extensions.Set
+
+					@observeMultiSelect 'panelFiles'
+					@observeMultiSelect 'refFiles'
+					@observeMultiSelect 'foldParams'
 
 					@relate (c) ->
-						c.method 'availFoldParams = common_params(slctdPanelFiles)'
+						c.method 'refFiles_opts = panelFiles_slct'
+					@relate (c) ->
+						c.method 'foldParams_opts = common_params(panelFiles_slct)'
 
 
 				# /SpadePanel
 
 				class Spade extends Argure.Model
-					constructor: (@files) ->
+					constructor: (@files_opts) ->
 						super()
 						@create_panel()
 
-					create_panel: -> @panels.push(new SpadePanel(@slctdFiles))
-					common_params: (files) ->	
+					create_panel: -> @panels.push(new SpadePanel(@files_slct))
+					common_params: (files) ->
 						if files.length > 0 then files.slice(1).reduce ((m,p) -> _.intersect(m,p.pN)), files[0].pN else []
 
+					@include Argure.Extensions.Set
 
-					@observe 'slctdFiles', initial: []
-					@observe 'availClusterParams'
-					@observe 'slctdClusterParams', initial: []
+					@observeMultiSelect 'files'
+					@observeMultiSelect 'clusterParams'
 					@relate (c) ->
-						c.method 'availClusterParams = common_params(slctdFiles)'
+						c.method 'clusterParams_opts = common_params(files_slct)'
 
 					@collection 'panels', initial: []
 													

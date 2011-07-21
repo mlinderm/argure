@@ -106,8 +106,8 @@
   var __bind = function(fn, me){ return function(){ return fn.apply(me, arguments); }; };
   Model = (function() {
     function Model() {
-      var build_observable, constraint, idx, method, name, observable, options, _fn, _fn2, _i, _j, _k, _len, _len2, _len3, _ref, _ref2, _ref3, _ref4, _ref5, _ref6, _ref7, _ref8;
-      this.priCounter = 0;
+      var build_observable, constraint, fn, idx, method, name, observable, options, _fn, _fn2, _i, _j, _k, _l, _len, _len2, _len3, _len4, _ref, _ref10, _ref2, _ref3, _ref4, _ref5, _ref6, _ref7, _ref8, _ref9;
+      this._priCounter = 0;
       build_observable = function(observable_kind, initial_value) {
         var argure_observable, priority, state;
         state = observable_kind(initial_value);
@@ -117,7 +117,7 @@
             return state();
           },
           write: function(value) {
-            priority(++this.priCounter);
+            priority(++this._priCounter);
             state(value);
             return null;
           },
@@ -130,12 +130,18 @@
       _ref2 = (_ref = this.constructor.observables) != null ? _ref : {};
       for (name in _ref2) {
         options = _ref2[name];
+        if (this[name]) {
+          continue;
+        }
         this[name] = build_observable.call(this, ko.observable, options.initial);
         true;
       }
       _ref4 = (_ref3 = this.constructor.collections) != null ? _ref3 : {};
       for (name in _ref4) {
         options = _ref4[name];
+        if (this[name]) {
+          continue;
+        }
         observable = build_observable.call(this, ko.observableArray, options.initial);
         _ref5 = ["pop", "push", "reverse", "shift", "sort", "splice", "unshift", "slice", "remove", "removeAll", "destroy", "destroyAll", "indexOf"];
         _fn = function(observable, method) {
@@ -152,12 +158,12 @@
         true;
       }
       this._methods = [];
-      this.constraints = [];
+      this._constraints = [];
       _ref7 = (_ref6 = this.constructor.relations) != null ? _ref6 : [];
       for (_j = 0, _len2 = _ref7.length; _j < _len2; _j++) {
         constraint = _ref7[_j];
-        idx = this.constraints.push(new Argure.Constraint(constraint));
-        _ref8 = this.constraints[idx - 1].methods;
+        idx = this._constraints.push(new Argure.Constraint(constraint));
+        _ref8 = this._constraints[idx - 1].methods;
         _fn2 = __bind(function(method) {
           return this._methods.push(ko.dependentObservable(function() {
             var name;
@@ -178,7 +184,27 @@
           _fn2(method);
         }
       }
+      _ref10 = (_ref9 = this.constructor._delays) != null ? _ref9 : {};
+      for (_l = 0, _len4 = _ref10.length; _l < _len4; _l++) {
+        fn = _ref10[_l];
+        fn.call(this);
+      }
     }
+    Model._delayed = function(fn) {
+      var _ref;
+            if ((_ref = this._delays) != null) {
+        _ref;
+      } else {
+        this._delays = [];
+      };
+      return this._delays.push(fn);
+    };
+    Model.include = function(mixin) {
+      if (typeof mixin !== "function") {
+        throw new Error("Mixin must be a function");
+      }
+      return mixin.call(this);
+    };
     Model.observe = function(name, options) {
       var _ref;
       if (options == null) {
@@ -228,80 +254,77 @@
   });
 }).call(this);
 (function() {
-  var Many, ManyFromMany, buildSetObservable;
-  buildSetObservable = function(viewModel, set) {
-    if (typeof set === 'function') {
-      return ko.dependentObservable(set, viewModel);
+  var apply_set_extensions;
+  var __bind = function(fn, me){ return function(){ return fn.apply(me, arguments); }; };
+  apply_set_extensions = function() {
+    var _base, _ref, _ref2;
+        if ((_ref = this.observeMultiSelect) != null) {
+      _ref;
     } else {
-      return ko.observableArray(set);
-    }
-  };
-  Many = function(set) {
-    if (set == null) {
-      set = [];
-    }
-    return new Argure.ModelHelper(function() {
-      return {
-        set: buildSetObservable(this, set)
-      };
-    });
-  };
-  namespace('Argure', function(exports) {
-    return exports.Many = Many;
-  });
-  ManyFromMany = function(superset, subset) {
-    if (superset == null) {
-      superset = [];
-    }
-    if (subset == null) {
-      subset = [];
-    }
-    return new Argure.ModelHelper(function() {
-      return {
-        superset: buildSetObservable(this, superset),
-        subset: buildSetObservable(this, subset)
-      };
-    });
-  };
-  namespace('Argure', function(exports) {
-    return exports.ManyFromMany = ManyFromMany;
-  });
-  ko.bindingHandlers.manyFromMany = {
-    init: function(element, valueAccessor, allBindingsAccessor, viewModel) {
-      ko.bindingHandlers.selectedOptions.init(element, (function() {
-        return valueAccessor().subset;
-      }), allBindingsAccessor, viewModel);
-      return null;
-    },
-    update: function(element, valueAccessor, allBindingsAccessor, viewModel) {
-      ko.bindingHandlers.options.update(element, (function() {
-        return valueAccessor().superset;
-      }), allBindingsAccessor, viewModel);
-      ko.bindingHandlers.selectedOptions.update(element, (function() {
-        return valueAccessor().subset;
-      }), allBindingsAccessor, viewModel);
-      return null;
-    }
-  };
-  ko.bindingHandlers.displayMany = {
-    update: function(element, valueAccessor, allBindingsAccessor, viewModel) {
-      var template;
-      template = allBindingsAccessor()['displayTemplate'];
-      if (!(template != null)) {
-        throw new Error("'displayTemplate' binding needed when using 'displayMany'");
-      }
-      ko.bindingHandlers.template.update(element, (function() {
-        return {
-          name: template,
-          foreach: valueAccessor().set,
-          templateOptions: {
-            model: viewModel
+      this.observeMultiSelect = function(name, options) {
+        var _ref2;
+        if (options == null) {
+          options = void 0;
+        }
+        this.collection(name + '_opts', {
+          initial: options != null ? options.initialOpts : void 0
+        });
+        this.collection(name + '_slct', {
+          initial: (_ref2 = options != null ? options.initialSlct : void 0) != null ? _ref2 : []
+        });
+        this._delayed(function() {
+          this[name] = {
+            opts: this[name + '_opts'],
+            slct: this[name + '_slct']
+          };
+          return null;
+        });
+        return this._delayed(function() {
+          if (ko.isObservable(this[name + '_opts']) && ko.observable(this[name + '_slct'])) {
+            return this[name + '_opts'].subscribe(__bind(function() {
+              var item, orphans;
+              orphans = (function() {
+                var _i, _len, _ref3, _results;
+                _ref3 = this[name + '_slct'].state();
+                _results = [];
+                for (_i = 0, _len = _ref3.length; _i < _len; _i++) {
+                  item = _ref3[_i];
+                  if (this[name + '_opts'].state.indexOf(item) < 0) {
+                    _results.push(item);
+                  }
+                }
+                return _results;
+              }).call(this);
+              if (orphans.length) {
+                this[name + '_slct'].state.removeAll(orphans);
+              }
+              return null;
+            }, this));
           }
-        };
-      }), allBindingsAccessor, viewModel);
-      return null;
-    }
+        });
+      };
+    };
+    return (_ref2 = (_base = ko.bindingHandlers).multiSelect) != null ? _ref2 : _base.multiSelect = {
+      init: function(element, valueAccessor, allBindingsAccessor, viewModel) {
+        ko.bindingHandlers.selectedOptions.init(element, (function() {
+          return valueAccessor().slct;
+        }), allBindingsAccessor, viewModel);
+        return null;
+      },
+      update: function(element, valueAccessor, allBindingsAccessor, viewModel) {
+        ko.bindingHandlers.options.update(element, (function() {
+          return valueAccessor().opts;
+        }), allBindingsAccessor, viewModel);
+        ko.bindingHandlers.selectedOptions.update(element, (function() {
+          return valueAccessor().slct;
+        }), allBindingsAccessor, viewModel);
+        return null;
+      }
+    };
   };
+  namespace('Argure.Extensions', function(exports) {
+    return exports.Set = apply_set_extensions;
+  });
 }).call(this);
 
 
