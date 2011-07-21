@@ -14,27 +14,40 @@
 			<script id="panelsTemplate" type="text/html" charset="utf-8">
 				<li>
 					<form>
-						<label for="panelFiles">Select Panel Files:</label>
-						<select id="panelFiles" data-bind='collectionMultiSelect: panelFiles, optionsText: "name"' multiple=multiple></select>
-						<label for="panelRefFiles">Select Reference Files:</label>
-						<select id="panelRefFiles" data-bind='collectionMultiSelect: refFiles, optionsText: "name"' multiple=multiple></select>
-						<label for="panelRefParams">Select Fold Change Parameters:</label>
-						<select id="panelRefParams" data-bind='collectionMultiSelect: foldParams' multiple=multiple></select>
-						<button data-bind="click: function() { $item.parentCollection.remove(this); }">Delete Panel</button>
+						<fieldset>
+							<legend>Define Analysis Panel</legend>
+							<label>
+								Select Panel Files
+								<select data-bind='collectionMultiSelect: panelFiles, optionsText: "name"' multiple=multiple></select>
+							</label>
+							<label>
+								Select Reference Files
+								<select data-bind='collectionMultiSelect: refFiles, optionsText: "name"' multiple=multiple></select>
+							</label>
+							<label>Select Fold Change Parameters
+								<select data-bind='collectionMultiSelect: foldParams' multiple=multiple></select>
+							</label>
+							<button data-bind="click: function() { $item.parentCollection.remove(this); }">Delete Panel</button>
+						</fieldset>
 					</form>
 				</li>
 			</script>
 
 			<script id="spadeTemplate" type="text/html" charset="utf-8">	
-				<h2>Setup Spade Analysis</h2>
 				<form>
-					<label for="slctdFiles">Select Files for Analysis:</label>
-					<select id="slctdFiles" data-bind='collectionMultiSelect: files, optionsText: "name"' multiple="multiple"></select>
-					<label for="clustParams">Select Clustering Parameters:</label>
-					<select id="clustParams" data-bind='collectionMultiSelect: clusterParams' multiple=multiple ></select>
-					<h3>Panels</h3>
-					<ul data-bind='collectionTemplate: panels' ></ul>
-					<button data-bind="click: create_panel">Create Another Panel</button>
+					<fieldset>
+						<legend>Setup SPADE Analysis</legend>
+						<label>
+							Select Files for Analysis
+							<select id="slctdFiles" data-bind='collectionMultiSelect: files, optionsText: "name"' multiple="multiple"></select>
+						</label>
+						<label>Select Clustering Parameters
+							<select id="clustParams" data-bind='collectionMultiSelect: clusterParams' multiple=multiple ></select>
+						</label>
+						<h3>Panels</h3>
+						<ul data-bind='collectionTemplate: panels' ></ul>
+						<button data-bind="click: create_panel">Create Another Panel</button>
+					</fieldset>
 				</form>
 			</script>
 
