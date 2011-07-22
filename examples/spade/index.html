@@ -2,51 +2,46 @@
 <html>
 	<head>
 		<title> Argure Demo: SPADE </title>
-		<link href="../../public/stylesheets/core.css" media="screen, projection" rel="stylesheet" type="text/css" /> 
+		<link href="../../public/stylesheets/ui.core.css" media="screen, projection" rel="stylesheet" type="text/css" /> 
+		<link href="../../public/stylesheets/ui.form.css" media="screen, projection" rel="stylesheet" type="text/css" /> 
 		<script src="../../spec/vendor/jquery-1.6.js"></script>
 		<script src="../../spec/vendor/jquery.tmpl.js"></script>
 		<script src="../../spec/vendor/knockout-1.2.1.debug.js"></script>
-		<script src="../../spec/vendor/underscore.js"></script>
 		<script src="../../public/javascripts/argure.js"></script>
 	</head>
 	<body>
 		<div>	
 			<!-- "view" for created panels -->
-			<script id="panelsTemplate" type="text/html" charset="utf-8">
+			<script id="panelsTemplate" type="text/x-jQuery-tmpl" charset="utf-8">
 				<li>
-					<form>
-						<fieldset>
-							<legend>Define Analysis Panel</legend>
-							<label>
-								Select Panel Files
-								<select data-bind='collectionMultiSelect: panelFiles, optionsText: "name"' multiple=multiple></select>
-							</label>
-							<label>
-								Select Reference Files
-								<select data-bind='collectionMultiSelect: refFiles, optionsText: "name"' multiple=multiple></select>
-							</label>
-							<label>Select Fold Change Parameters
-								<select data-bind='collectionMultiSelect: foldParams' multiple=multiple></select>
-							</label>
-							<button data-bind="click: function() { $item.parentCollection.remove(this); }">Delete Panel</button>
-						</fieldset>
-					</form>
+					<fieldset>
+						<legend>Define Analysis Panel</legend>
+						<label>Select Panel Files
+							<select data-bind='collectionMultiSelect: panelFiles, optionsText: "name"' multiple=multiple></select>
+						</label>
+						<label>Select Reference Files
+							<select data-bind='collectionMultiSelect: refFiles, optionsText: "name"' multiple=multiple></select>
+						</label>
+						<label>Select Fold Change Parameters
+							<select data-bind='collectionMultiSelect: foldParams' multiple=multiple></select>
+						</label>
+						<button data-bind="click: function() { $item.parentCollection.remove(this); }">Delete Panel</button>
+					</fieldset>
 				</li>
 			</script>
 
-			<script id="spadeTemplate" type="text/html" charset="utf-8">	
-				<form>
+			<script id="spadeTemplate" type="text/x-jQuery-tmpl" charset="utf-8">	
+				<form class="ui-form">
 					<fieldset>
 						<legend>Setup SPADE Analysis</legend>
-						<label>
-							Select Files for Analysis
-							<select id="slctdFiles" data-bind='collectionMultiSelect: files, optionsText: "name"' multiple="multiple"></select>
+						<label>Select Files for Analysis
+							<select data-bind='collectionMultiSelect: files, optionsText: "name"' multiple='multiple' name='slctdFiles'></select>
 						</label>
 						<label>Select Clustering Parameters
-							<select id="clustParams" data-bind='collectionMultiSelect: clusterParams' multiple=multiple ></select>
+							<select data-bind='collectionMultiSelect: clusterParams' multiple='multiple' name='clustParams'></select>
 						</label>
 						<h3>Panels</h3>
-						<ul data-bind='collectionTemplate: panels' ></ul>
+						<ul data-bind='collectionTemplate: panels, validate: panels'></ul>
 						<button data-bind="click: create_panel">Create Another Panel</button>
 					</fieldset>
 				</form>
@@ -55,7 +50,7 @@
 			<h1>
 				SPADE Command Synthesis
 			</h1>
-			<div data-bind='template: "spadeTemplate"'> 
+			<div id="spade_main" data-bind='template: "spadeTemplate"'> 
 			</div>
 
 
@@ -66,7 +61,7 @@
 						super()
 
 					common_params: (files) ->
-						if files.length > 0 then files.slice(1).reduce ((m,p) -> _.intersect(m,p.pN)), files[0].pN else []
+						_.intersect.apply _, (f.pN for f in files)
 
 					@include Argure.Extensions.Set
 
@@ -89,7 +84,7 @@
 
 					create_panel: -> @panels.push(new SpadePanel(@files_slct))
 					common_params: (files) ->
-						if files.length > 0 then files.slice(1).reduce ((m,p) -> _.intersect(m,p.pN)), files[0].pN else []
+						_.intersect.apply _, (f.pN for f in files)
 
 					@include Argure.Extensions.Set
 
@@ -99,7 +94,10 @@
 						c.method 'clusterParams_opts = common_params(files_slct)'
 
 					@collection 'panels', initial: []
-													
+					@validate 'panels', ->
+						@panels().length <= 1 || (_.intersect.apply _, (p.panelFiles_slct() for p in @panels())).length == 0
+					, "Panel files must be mutually exclusive"
+
 				# /Spade
 
 				this.spade = new Spade [

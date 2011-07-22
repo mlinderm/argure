@@ -1,20 +1,38 @@
+# Compatibility method for Object.keys (https://developer.mozilla.org/en/JavaScript/Reference/Global_Objects/Object/keys)
+class Errors
+	constructor: ->
+		errors = {}
+		
+		@size = ->
+			_.reduce (errors[k].length for k in _.keys(errors)), ((m, k) -> m+k), 0
+		@add = (name, message) ->
+			(errors[name] ?= []).push message
+			@
+
+#/Errors
+
+
 class Model
 	constructor: ->
-		@_priCounter=0
 
+		@errors = new Errors()
+
+
+		_priCounter=0
 		build_observable = (name, observable_kind, initial_value) ->
 			state    = observable_kind initial_value
 			priority = ko.observable 0
 			argure_observable = ko.dependentObservable
 				read : -> state()
 				write: (value) ->
-					priority(++@_priCounter)
+					priority(++_priCounter)
 					state(value)
-					return null
+					null
 				owner: @
 			argure_observable.observableName = name
 			argure_observable.state = state
 			argure_observable.priority = priority
+			argure_observable.errors = false  # Default is no errors
 			return argure_observable
 
 		# Convert observables into corresponding knockout observables
@@ -29,7 +47,7 @@ class Model
 			observable = build_observable.call @, name, ko.observableArray, options.initial
 			for method in ["pop", "push", "reverse", "shift", "sort", "splice", "unshift", "slice", "remove", "removeAll", "destroy", "destroyAll", "indexOf"]
 				do (observable, method) ->
-					observable[method] = -> 
+					observable[method] = ->
 						observable.state[method].apply observable.state, arguments
 				true
 			@[name] = observable
@@ -44,7 +62,20 @@ class Model
 				do (method) =>
 					@_methods.push ko.dependentObservable ->
 						@[method.output].state method.body.apply(this, (ko.utils.unwrapObservable(@[name]) for name in method.inputs))
-					, @	
+						null
+					, @
+
+		for name, validators of @.constructor.validators ? {}
+			do (name, validators) =>
+				@[name].errors = ko.dependentObservable ->
+					valid = true
+					for v in validators
+						result = v.call(@)
+						valid &&= result
+					return !valid  # Observable returns true if error, false otherwise
+				, @
+				null
+
 
 		# Apply delays
 		for fn in @.constructor._delays ? {}
@@ -55,6 +86,7 @@ class Model
 		@_delays ?= []
 		@_delays.push(fn)
 
+	Argure.Extensions.Validate.call @  # Add validate extensions by default
 	@include: (mixin) ->
 		throw new Error("Mixin must be a function") if typeof mixin != "function"
 		mixin.call @
@@ -73,6 +105,12 @@ class Model
 		@relations ?= []
 		throw new Error("You must specify constraint methods") if typeof methods != "function"
 		@relations.push(methods)
+
+	@validate: (name, validator, message=undefined) ->
+		validator.message = message
+		((@validators ?= {})[name] ?= []).push(validator)
+		
+
 
 namespace 'Argure', (exports) ->
 	exports.Model = Model

@@ -3,4 +3,14 @@
  * Import this file using the following HTML or equivalent:
  * <link href="/stylesheets/core.css" media="screen, projection" rel="stylesheet" type="text/css" /> */
 
-@import "compass/reset";
+@import "blueprint/colors";
+
+.ui-state-error {
+	border: 1px solid $error-border-color; 
+	background: $error-bg-color;
+	color: $error-color; 
+
+	a {
+		color: $error-color;
+	}
+}

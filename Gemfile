@@ -15,5 +15,7 @@ group :development do
 
 	gem 'guard-coffeescript'
 	gem 'guard-compass'
+	
+	gem 'sprockets', :git => "git://github.com/matehat/sprockets.git"
 	gem 'guard-sprockets'
 end

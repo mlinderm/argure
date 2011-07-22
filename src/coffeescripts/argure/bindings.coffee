@@ -1,4 +1,17 @@
 #
+# Validate Extensions
+#
+apply_validate_extensions = ->
+	ko.bindingHandlers.validate ?=
+		update: (element, valueAccessor, allBindingsAccessor, viewModel) ->
+			ko.bindingHandlers.css.update element, (->
+				value = valueAccessor()
+				{ "ui-state-error": value.errors } 
+			), allBindingsAccessor, viewModel
+
+
+
+#
 # Set Extensions
 #
 apply_set_extensions = ->
@@ -19,8 +32,8 @@ apply_set_extensions = ->
 		# subscription fixes that by propagrating removals...
 		@_delayed ->
 			if ko.isObservable(@[name+'_opts']) && ko.observable(@[name+'_slct'])
-				@[name+'_opts'].subscribe =>
-					orphans = (item for item in @[name+'_slct'].state() when @[name+'_opts'].state.indexOf(item) < 0)
+				@[name+'_opts'].state.subscribe (value) =>
+					orphans = (item for item in @[name+'_slct'].state() when value.indexOf(item) < 0)
 					this[name+'_slct'].state.removeAll(orphans) if orphans.length
 					null
 
@@ -47,3 +60,4 @@ apply_set_extensions = ->
 
 namespace 'Argure.Extensions', (exports) ->
 	exports.Set = apply_set_extensions
+	exports.Validate = apply_validate_extensions

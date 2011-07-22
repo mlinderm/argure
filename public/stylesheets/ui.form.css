@@ -1,0 +1,26 @@
+/* line 18, ../../../../../.rvm/gems/ruby-1.9.2-p180@argure/gems/compass-0.11.5/frameworks/blueprint/stylesheets/blueprint/_form.scss */
+.ui-form label { font-weight: bold; }
+/* line 19, ../../../../../.rvm/gems/ruby-1.9.2-p180@argure/gems/compass-0.11.5/frameworks/blueprint/stylesheets/blueprint/_form.scss */
+.ui-form fieldset { padding: 1.4em; margin: 0 0 1.5em 0; }
+/* line 20, ../../../../../.rvm/gems/ruby-1.9.2-p180@argure/gems/compass-0.11.5/frameworks/blueprint/stylesheets/blueprint/_form.scss */
+.ui-form legend { font-weight: bold; font-size: 1.2em; }
+/* line 26, ../../../../../.rvm/gems/ruby-1.9.2-p180@argure/gems/compass-0.11.5/frameworks/blueprint/stylesheets/blueprint/_form.scss */
+.ui-form input.text, .ui-form input.title, .ui-form input[type=email], .ui-form input[type=text], .ui-form input[type=password] { margin: 0.5em 0; background-color: white; padding: 5px; }
+/* line 27, ../../../../../.rvm/gems/ruby-1.9.2-p180@argure/gems/compass-0.11.5/frameworks/blueprint/stylesheets/blueprint/_form.scss */
+.ui-form input.title { font-size: 1.5em; }
+/* line 29, ../../../../../.rvm/gems/ruby-1.9.2-p180@argure/gems/compass-0.11.5/frameworks/blueprint/stylesheets/blueprint/_form.scss */
+.ui-form textarea { margin: 0.5em 0; padding: 5px; }
+/* line 30, ../../../../../.rvm/gems/ruby-1.9.2-p180@argure/gems/compass-0.11.5/frameworks/blueprint/stylesheets/blueprint/_form.scss */
+.ui-form select { margin: 0.5em 0; }
+/* line 55, ../../../../../.rvm/gems/ruby-1.9.2-p180@argure/gems/compass-0.11.5/frameworks/blueprint/stylesheets/blueprint/_form.scss */
+.ui-form fieldset { border: 1px solid #cccccc; }
+/* line 58, ../../../../../.rvm/gems/ruby-1.9.2-p180@argure/gems/compass-0.11.5/frameworks/blueprint/stylesheets/blueprint/_form.scss */
+.ui-form input.text, .ui-form input.title, .ui-form input[type=email], .ui-form input[type=text], .ui-form input[type=password], .ui-form textarea { background-color: #fff; border: 1px solid #bbbbbb; }
+/* line 61, ../../../../../.rvm/gems/ruby-1.9.2-p180@argure/gems/compass-0.11.5/frameworks/blueprint/stylesheets/blueprint/_form.scss */
+.ui-form input.text:focus, .ui-form input.title:focus, .ui-form input[type=email]:focus, .ui-form input[type=text]:focus, .ui-form input[type=password]:focus, .ui-form textarea:focus { border-color: #666666; }
+/* line 65, ../../../../../.rvm/gems/ruby-1.9.2-p180@argure/gems/compass-0.11.5/frameworks/blueprint/stylesheets/blueprint/_form.scss */
+.ui-form select { background-color: #fff; border-width: 1px; border-style: solid; }
+/* line 44, ../../../../../.rvm/gems/ruby-1.9.2-p180@argure/gems/compass-0.11.5/frameworks/blueprint/stylesheets/blueprint/_form.scss */
+.ui-form input.text, .ui-form input.title, .ui-form input[type=email], .ui-form input[type=text], .ui-form input[type=password] { width: 300px; }
+/* line 46, ../../../../../.rvm/gems/ruby-1.9.2-p180@argure/gems/compass-0.11.5/frameworks/blueprint/stylesheets/blueprint/_form.scss */
+.ui-form textarea { width: 390px; height: 250px; }

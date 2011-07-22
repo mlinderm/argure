@@ -1,0 +1,5 @@
+/* Welcome to Compass. In this file you should write your main styles. (or centralize your imports) Import this file using the following HTML or equivalent: <link href="/stylesheets/core.css" media="screen, projection" rel="stylesheet" type="text/css" /> */
+/* line 8, ../../src/stylesheets/ui.core.scss */
+.ui-state-error { border: 1px solid #fbc2c4; background: #fbe3e4; color: #8a1f11; }
+/* line 13, ../../src/stylesheets/ui.core.scss */
+.ui-state-error a { color: #8a1f11; }

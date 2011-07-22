@@ -15,9 +15,10 @@
 	};
 	
 
+	//= require "../../vendor/underscore-1.1.7.js"
+	//= require "../../build/javascripts/argure/bindings.js"
 	//= require "../../build/javascripts/argure/constraints.js"
 	//= require "../../build/javascripts/argure/model.js"
-	//= require "../../build/javascripts/argure/bindings.js"
 
 
 }).call(this);
