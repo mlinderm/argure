@@ -33,6 +33,7 @@ class Model
 			argure_observable.state = state
 			argure_observable.priority = priority
 			argure_observable.errors = false  # Default is no errors
+			@.constructor.build_observable_callback?.call argure_observable
 			return argure_observable
 
 		# Convert observables into corresponding knockout observables
@@ -55,15 +56,9 @@ class Model
 								
 		# Create dependent observables for relations (this is a crude way to do this)
 		@_methods = []
-		@_constraints = []
 		for constraint in @.constructor.relations ? []
-			idx = @_constraints.push new Argure.Constraint constraint
-			for method in @_constraints[idx-1].methods
-				do (method) =>
-					@_methods.push ko.dependentObservable ->
-						@[method.output].state method.body.apply(this, (ko.utils.unwrapObservable(@[name]) for name in method.inputs))
-						null
-					, @
+			con = new Argure.Constraint constraint
+			@_methods.push @.constructor.build_constraint_callback?.call @, con
 
 		for name, validators of @.constructor.validators ? {}
 			do (name, validators) =>
@@ -86,6 +81,7 @@ class Model
 		@_delays ?= []
 		@_delays.push(fn)
 
+	Argure.Extensions.Knockout.call @
 	Argure.Extensions.Validate.call @  # Add validate extensions by default
 	@include: (mixin) ->
 		throw new Error("Mixin must be a function") if typeof mixin != "function"

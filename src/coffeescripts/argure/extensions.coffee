@@ -1,4 +1,17 @@
 #
+# Default Knockout "Constraint" Solver
+#
+apply_knockout_solver = ->
+	@build_constraint_callback ?= (constraint) ->
+		for method in constraint.methods
+			do (method) =>
+				ko.dependentObservable ->
+					@[method.output].state method.body.apply(@, (ko.utils.unwrapObservable(@[name]) for name in method.inputs))
+					null
+				, @
+
+
+#
 # Validate Extensions
 #
 apply_validate_extensions = ->
@@ -59,5 +72,6 @@ apply_set_extensions = ->
 # /SetExtensions
 
 namespace 'Argure.Extensions', (exports) ->
+	exports.Knockout = apply_knockout_solver
 	exports.Set = apply_set_extensions
 	exports.Validate = apply_validate_extensions

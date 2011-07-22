@@ -35,8 +35,36 @@ b.template=function(a,c){var d=b.templateSettings;d="var __p=[],print=function()
 var j=function(a){this._wrapped=a};b.prototype=j.prototype;var r=function(a,c){return c?b(a).chain():a},H=function(a,c){j.prototype[a]=function(){var a=f.call(arguments);D.call(a,this._wrapped);return r(c.apply(b,a),this._chain)}};b.mixin(b);h(["pop","push","reverse","shift","sort","splice","unshift"],function(a){var b=i[a];j.prototype[a]=function(){b.apply(this._wrapped,arguments);return r(this._wrapped,this._chain)}});h(["concat","join","slice"],function(a){var b=i[a];j.prototype[a]=function(){return r(b.apply(this._wrapped,
 arguments),this._chain)}});j.prototype.chain=function(){this._chain=!0;return this};j.prototype.value=function(){return this._wrapped}})();
 (function() {
-  var apply_set_extensions, apply_validate_extensions;
+  var apply_knockout_solver, apply_set_extensions, apply_validate_extensions;
   var __bind = function(fn, me){ return function(){ return fn.apply(me, arguments); }; };
+  apply_knockout_solver = function() {
+    var _ref;
+    return (_ref = this.build_constraint_callback) != null ? _ref : this.build_constraint_callback = function(constraint) {
+      var method, _i, _len, _ref2, _results;
+      _ref2 = constraint.methods;
+      _results = [];
+      for (_i = 0, _len = _ref2.length; _i < _len; _i++) {
+        method = _ref2[_i];
+        _results.push(__bind(function(method) {
+          return ko.dependentObservable(function() {
+            var name;
+            this[method.output].state(method.body.apply(this, (function() {
+              var _j, _len2, _ref3, _results2;
+              _ref3 = method.inputs;
+              _results2 = [];
+              for (_j = 0, _len2 = _ref3.length; _j < _len2; _j++) {
+                name = _ref3[_j];
+                _results2.push(ko.utils.unwrapObservable(this[name]));
+              }
+              return _results2;
+            }).call(this)));
+            return null;
+          }, this);
+        }, this)(method));
+      }
+      return _results;
+    };
+  };
   apply_validate_extensions = function() {
     var _base, _ref;
     return (_ref = (_base = ko.bindingHandlers).validate) != null ? _ref : _base.validate = {
@@ -137,6 +165,7 @@ arguments),this._chain)}});j.prototype.chain=function(){this._chain=!0;return th
     };
   };
   namespace('Argure.Extensions', function(exports) {
+    exports.Knockout = apply_knockout_solver;
     exports.Set = apply_set_extensions;
     return exports.Validate = apply_validate_extensions;
   });
@@ -260,11 +289,11 @@ arguments),this._chain)}});j.prototype.chain=function(){this._chain=!0;return th
   })();
   Model = (function() {
     function Model() {
-      var build_observable, constraint, fn, idx, method, name, observable, options, validators, _fn, _fn2, _fn3, _i, _j, _k, _l, _len, _len2, _len3, _len4, _priCounter, _ref, _ref10, _ref11, _ref12, _ref2, _ref3, _ref4, _ref5, _ref6, _ref7, _ref8, _ref9;
+      var build_observable, con, constraint, fn, method, name, observable, options, validators, _fn, _fn2, _i, _j, _k, _len, _len2, _len3, _priCounter, _ref, _ref10, _ref11, _ref12, _ref2, _ref3, _ref4, _ref5, _ref6, _ref7, _ref8, _ref9;
       this.errors = new Errors();
       _priCounter = 0;
       build_observable = function(name, observable_kind, initial_value) {
-        var argure_observable, priority, state;
+        var argure_observable, priority, state, _ref;
         state = observable_kind(initial_value);
         priority = ko.observable(0);
         argure_observable = ko.dependentObservable({
@@ -282,6 +311,9 @@ arguments),this._chain)}});j.prototype.chain=function(){this._chain=!0;return th
         argure_observable.state = state;
         argure_observable.priority = priority;
         argure_observable.errors = false;
+        if ((_ref = this.constructor.build_observable_callback) != null) {
+          _ref.call(argure_observable);
+        }
         return argure_observable;
       };
       _ref2 = (_ref = this.constructor.observables) != null ? _ref : {};
@@ -315,40 +347,19 @@ arguments),this._chain)}});j.prototype.chain=function(){this._chain=!0;return th
         true;
       }
       this._methods = [];
-      this._constraints = [];
       _ref7 = (_ref6 = this.constructor.relations) != null ? _ref6 : [];
       for (_j = 0, _len2 = _ref7.length; _j < _len2; _j++) {
         constraint = _ref7[_j];
-        idx = this._constraints.push(new Argure.Constraint(constraint));
-        _ref8 = this._constraints[idx - 1].methods;
-        _fn2 = __bind(function(method) {
-          return this._methods.push(ko.dependentObservable(function() {
-            var name;
-            this[method.output].state(method.body.apply(this, (function() {
-              var _l, _len4, _ref9, _results;
-              _ref9 = method.inputs;
-              _results = [];
-              for (_l = 0, _len4 = _ref9.length; _l < _len4; _l++) {
-                name = _ref9[_l];
-                _results.push(ko.utils.unwrapObservable(this[name]));
-              }
-              return _results;
-            }).call(this)));
-            return null;
-          }, this));
-        }, this);
-        for (_k = 0, _len3 = _ref8.length; _k < _len3; _k++) {
-          method = _ref8[_k];
-          _fn2(method);
-        }
+        con = new Argure.Constraint(constraint);
+        this._methods.push((_ref8 = this.constructor.build_constraint_callback) != null ? _ref8.call(this, con) : void 0);
       }
       _ref10 = (_ref9 = this.constructor.validators) != null ? _ref9 : {};
-      _fn3 = __bind(function(name, validators) {
+      _fn2 = __bind(function(name, validators) {
         this[name].errors = ko.dependentObservable(function() {
-          var result, v, valid, _l, _len4;
+          var result, v, valid, _k, _len3;
           valid = true;
-          for (_l = 0, _len4 = validators.length; _l < _len4; _l++) {
-            v = validators[_l];
+          for (_k = 0, _len3 = validators.length; _k < _len3; _k++) {
+            v = validators[_k];
             result = v.call(this);
             valid && (valid = result);
           }
@@ -358,11 +369,11 @@ arguments),this._chain)}});j.prototype.chain=function(){this._chain=!0;return th
       }, this);
       for (name in _ref10) {
         validators = _ref10[name];
-        _fn3(name, validators);
+        _fn2(name, validators);
       }
       _ref12 = (_ref11 = this.constructor._delays) != null ? _ref11 : {};
-      for (_l = 0, _len4 = _ref12.length; _l < _len4; _l++) {
-        fn = _ref12[_l];
+      for (_k = 0, _len3 = _ref12.length; _k < _len3; _k++) {
+        fn = _ref12[_k];
         fn.call(this);
       }
     }
@@ -375,6 +386,7 @@ arguments),this._chain)}});j.prototype.chain=function(){this._chain=!0;return th
       };
       return this._delays.push(fn);
     };
+    Argure.Extensions.Knockout.call(Model);
     Argure.Extensions.Validate.call(Model);
     Model.include = function(mixin) {
       if (typeof mixin !== "function") {
