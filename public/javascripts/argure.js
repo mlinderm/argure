@@ -105,19 +105,8 @@ arguments),this._chain)}});j.prototype.chain=function(){this._chain=!0;return th
         return this._delayed(function() {
           if (ko.isObservable(this[name + '_opts']) && ko.observable(this[name + '_slct'])) {
             return this[name + '_opts'].state.subscribe(__bind(function(value) {
-              var item, orphans;
-              orphans = (function() {
-                var _i, _len, _ref3, _results;
-                _ref3 = this[name + '_slct'].state();
-                _results = [];
-                for (_i = 0, _len = _ref3.length; _i < _len; _i++) {
-                  item = _ref3[_i];
-                  if (value.indexOf(item) < 0) {
-                    _results.push(item);
-                  }
-                }
-                return _results;
-              }).call(this);
+              var orphans;
+              orphans = _.difference(this[name + '_slct'].state(), value);
               if (orphans.length) {
                 this[name + '_slct'].state.removeAll(orphans);
               }

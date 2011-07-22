@@ -46,7 +46,7 @@ apply_set_extensions = ->
 		@_delayed ->
 			if ko.isObservable(@[name+'_opts']) && ko.observable(@[name+'_slct'])
 				@[name+'_opts'].state.subscribe (value) =>
-					orphans = (item for item in @[name+'_slct'].state() when value.indexOf(item) < 0)
+					orphans = _.difference @[name+'_slct'].state(), value
 					this[name+'_slct'].state.removeAll(orphans) if orphans.length
 					null
 
