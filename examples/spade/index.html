@@ -70,7 +70,7 @@
 					@collectionMultiSelect 'foldParams'
 
 					@relate (c) ->
-						c.method 'refFiles_opts = panelFiles_slct'
+						c.method 'refFiles_opts = if panelFiles_slct.length then panelFiles_slct else []'
 					@relate (c) ->
 						c.method 'foldParams_opts = common_params(panelFiles_slct)'
 

@@ -11,13 +11,13 @@ class ExtractOperandsVisitor extends ASTVisitor
 	
 	default: (node) -> true
 	Value: (node) ->
-		@operands.push node.unwrap().value if node.isAssignable()
+		@operands.push node.base.value if node.isAssignable()
 		true
 
 extract_operands = (ast) ->
 	v = new ExtractOperandsVisitor
 	v.apply(ast)
-	return v.operands
+	return _.uniq v.operands
 
 
 class Method

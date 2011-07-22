@@ -172,7 +172,7 @@ arguments),this._chain)}});j.prototype.chain=function(){this._chain=!0;return th
     };
     ExtractOperandsVisitor.prototype.Value = function(node) {
       if (node.isAssignable()) {
-        this.operands.push(node.unwrap().value);
+        this.operands.push(node.base.value);
       }
       return true;
     };
@@ -182,7 +182,7 @@ arguments),this._chain)}});j.prototype.chain=function(){this._chain=!0;return th
     var v;
     v = new ExtractOperandsVisitor;
     v.apply(ast);
-    return v.operands;
+    return _.uniq(v.operands);
   };
   Method = (function() {
     function Method(inputs, output, body) {
