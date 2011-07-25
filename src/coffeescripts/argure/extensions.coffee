@@ -10,7 +10,24 @@ apply_knockout_solver = ->
 					null
 				, @
 
+apply_deltaBlue_solver = ->
+	@build_constraint_callback ?= (constraint)->
+			for method in constraint.methods
+				do (method) =>
+					for input in method.inputs
+						if @[input].cnToNotify != undefined and @[input].cnToNotify.indexOf(constraint)==-1
+							@[input].cnToNotify.push(constraint)
+					if @[method.output].cnToNotify != undefined and @[method.output].cnToNotify.indexOf(constraint)==-1
+						@[method.output].cnToNotify.push(constraint)
 
+
+_obsCounter = 0
+add_deltaBlue_observable = ->
+	@build_observable_callback ?= () ->
+		@id = _obsCounter++
+		@cnToNotify = []
+		@wkStrength = 0
+		return null
 #
 # Validate Extensions
 #
@@ -19,7 +36,7 @@ apply_validate_extensions = ->
 		update: (element, valueAccessor, allBindingsAccessor, viewModel) ->
 			ko.bindingHandlers.css.update element, (->
 				value = valueAccessor()
-				{ "ui-state-error": value.errors } 
+				{ "ui-state-error": value.errors }
 			), allBindingsAccessor, viewModel
 
 
@@ -73,5 +90,7 @@ apply_set_extensions = ->
 
 namespace 'Argure.Extensions', (exports) ->
 	exports.Knockout = apply_knockout_solver
+	exports.DeltaBlueSolver = apply_deltaBlue_solver
+	exports.DeltaBlueObservable = add_deltaBlue_observable
 	exports.Set = apply_set_extensions
 	exports.Validate = apply_validate_extensions

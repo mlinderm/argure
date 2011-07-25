@@ -14,11 +14,62 @@ class Errors
 
 class Model
 	constructor: ->
+		@notifyObs = (obs,preCn) ->
+			for cn in @[obs].cnToNotify
+				if cn != preCn
+					@notifyCn(cn,obs)
+
+		@notifyCn = (cn,preObs) ->
+			oldMethod = cn.currentMethod
+			if(oldMethod!=undefined)
+				oldValue = @[oldMethod.output].state()
+				oldStr = @[oldMethod.output].wkStrength
+			minStr = Infinity
+			minMethod = undefined
+			for method in cn.methods
+				if @[method.output].wkStrength < minStr
+					minStr = @[method.output].wkStrength
+					minMethod = method
+			if minStr == oldStr
+				minMethod = oldMethod # Try to keep the old one if possible
+			newStr = Infinity
+			if minMethod != oldMethod and oldMethod != undefined and oldMethod.output != preObs
+				@[oldMethod.output].wkStrength = @[oldMethod.output].priority() # The original output is free now, so its stay constraint is redirected,
+									 											# so its walk about strength should be equal to its priority
+			for method in cn.methods
+				if method == minMethod
+					continue
+				if @[method.output].wkStrength < newStr
+					newStr = @[method.output].wkStrength
+
+			if minMethod == undefined
+				throw new Error("The graph is over constrainted.")
+			else
+				if minMethod.condition != undefined
+					if minMethod.condition.apply(this, (ko.utils.unwrapObservable(@[name]) for name in minMethod.inputs)) != true # Execute Condition
+						if cn.currentMethod ==undefined
+							return null
+						cn.currentMethod = undefined
+						@[oldMethod.output].wkStrength = @[oldMethod.output].priority()
+						@notifyObs(oldMethod.output, cn)
+						return null
+				@[minMethod.output].state minMethod.body.apply(this, (ko.utils.unwrapObservable(@[name]) for name in minMethod.inputs)) # Execute Method
+#				cnGraph.detectCycle()
+				if(minMethod == oldMethod)
+					if(@[minMethod.output].state() == oldValue and newStr == oldStr)
+						return null
+				cn.currentMethod = minMethod
+				@[minMethod.output].wkStrength = newStr
+				@notifyObs(minMethod.output,cn)
+				return null
+
 
 		@errors = new Errors()
 
 
 		_priCounter=0
+		_cnCounter=0
+
 		build_observable = (name, observable_kind, initial_value) ->
 			state    = observable_kind initial_value
 			priority = ko.observable 0
@@ -26,8 +77,11 @@ class Model
 				read : -> state()
 				write: (value) ->
 					priority(++_priCounter)
+					argure_observable.wkStrength = _priCounter
 					state(value)
-					null
+					for cn in @[name].cnToNotify
+						@notifyCn(cn)
+					return null
 				owner: @
 			argure_observable.observableName = name
 			argure_observable.state = state
@@ -81,7 +135,8 @@ class Model
 		@_delays ?= []
 		@_delays.push(fn)
 
-	Argure.Extensions.Knockout.call @
+	Argure.Extensions.DeltaBlueSolver.call @
+	Argure.Extensions.DeltaBlueObservable.call @
 	Argure.Extensions.Validate.call @  # Add validate extensions by default
 	@include: (mixin) ->
 		throw new Error("Mixin must be a function") if typeof mixin != "function"

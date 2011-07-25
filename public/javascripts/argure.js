@@ -35,7 +35,7 @@ b.template=function(a,c){var d=b.templateSettings;d="var __p=[],print=function()
 var j=function(a){this._wrapped=a};b.prototype=j.prototype;var r=function(a,c){return c?b(a).chain():a},H=function(a,c){j.prototype[a]=function(){var a=f.call(arguments);D.call(a,this._wrapped);return r(c.apply(b,a),this._chain)}};b.mixin(b);h(["pop","push","reverse","shift","sort","splice","unshift"],function(a){var b=i[a];j.prototype[a]=function(){b.apply(this._wrapped,arguments);return r(this._wrapped,this._chain)}});h(["concat","join","slice"],function(a){var b=i[a];j.prototype[a]=function(){return r(b.apply(this._wrapped,
 arguments),this._chain)}});j.prototype.chain=function(){this._chain=!0;return this};j.prototype.value=function(){return this._wrapped}})();
 (function() {
-  var apply_knockout_solver, apply_set_extensions, apply_validate_extensions;
+  var add_deltaBlue_observable, apply_deltaBlue_solver, apply_knockout_solver, apply_set_extensions, apply_validate_extensions, _obsCounter;
   var __bind = function(fn, me){ return function(){ return fn.apply(me, arguments); }; };
   apply_knockout_solver = function() {
     var _ref;
@@ -63,6 +63,41 @@ arguments),this._chain)}});j.prototype.chain=function(){this._chain=!0;return th
         }, this)(method));
       }
       return _results;
+    };
+  };
+  apply_deltaBlue_solver = function() {
+    var _ref;
+    return (_ref = this.build_constraint_callback) != null ? _ref : this.build_constraint_callback = function(constraint) {
+      var method, _i, _len, _ref2, _results;
+      _ref2 = constraint.methods;
+      _results = [];
+      for (_i = 0, _len = _ref2.length; _i < _len; _i++) {
+        method = _ref2[_i];
+        _results.push(__bind(function(method) {
+          var input, _j, _len2, _ref3;
+          _ref3 = method.inputs;
+          for (_j = 0, _len2 = _ref3.length; _j < _len2; _j++) {
+            input = _ref3[_j];
+            if (this[input].cnToNotify !== void 0 && this[input].cnToNotify.indexOf(constraint) === -1) {
+              this[input].cnToNotify.push(constraint);
+            }
+          }
+          if (this[method.output].cnToNotify !== void 0 && this[method.output].cnToNotify.indexOf(constraint) === -1) {
+            return this[method.output].cnToNotify.push(constraint);
+          }
+        }, this)(method));
+      }
+      return _results;
+    };
+  };
+  _obsCounter = 0;
+  add_deltaBlue_observable = function() {
+    var _ref;
+    return (_ref = this.build_observable_callback) != null ? _ref : this.build_observable_callback = function() {
+      this.id = _obsCounter++;
+      this.cnToNotify = [];
+      this.wkStrength = 0;
+      return null;
     };
   };
   apply_validate_extensions = function() {
@@ -166,6 +201,8 @@ arguments),this._chain)}});j.prototype.chain=function(){this._chain=!0;return th
   };
   namespace('Argure.Extensions', function(exports) {
     exports.Knockout = apply_knockout_solver;
+    exports.DeltaBlueSolver = apply_deltaBlue_solver;
+    exports.DeltaBlueObservable = add_deltaBlue_observable;
     exports.Set = apply_set_extensions;
     return exports.Validate = apply_validate_extensions;
   });
@@ -214,19 +251,22 @@ arguments),this._chain)}});j.prototype.chain=function(){this._chain=!0;return th
     return _.uniq(v.operands);
   };
   Method = (function() {
-    function Method(inputs, output, body) {
+    function Method(inputs, output, body, condition) {
       this.inputs = inputs;
       this.output = output;
       this.body = body;
+      this.condition = condition;
     }
     return Method;
   })();
   Constraint = (function() {
-    function Constraint(formulas) {
+    function Constraint(formulas, id) {
       this.methods = [];
+      this.id = id;
+      this.currentMethod = void 0;
       formulas.call(this, this);
     }
-    Constraint.prototype.method = function(args_or_code, body) {
+    Constraint.prototype.method = function(args_or_code, body, condition) {
       var assignment, ast, i, inputs, o, output, _ref;
       if (typeof args_or_code === "string") {
         ast = CoffeeScript.nodes(args_or_code);
@@ -235,7 +275,7 @@ arguments),this._chain)}});j.prototype.chain=function(){this._chain=!0;return th
           output = extract_operands(assignment.variable);
           inputs = extract_operands(assignment.value);
           eval("body = function(" + (inputs.join(',')) + ") { return " + (assignment.value.compile()) + "; }");
-          return this.methods.push(new Method(inputs, output, body));
+          return this.methods.push(new Method(inputs, output, body, condition));
         } else {
           if (!(ev.inputs != null) || !(ev.output != null)) {
             throw new Error("Ill formed constraint method: no inputs or output found");
@@ -246,7 +286,7 @@ arguments),this._chain)}});j.prototype.chain=function(){this._chain=!0;return th
           i = args_or_code[o];
           _ref = [o, i], output = _ref[0], inputs = _ref[1];
         }
-        return this.methods.push(new Method(inputs, output, body));
+        return this.methods.push(new Method(inputs, output, body, condition));
       } else {
         throw new Error("Unsupported method specification");
       }
@@ -289,9 +329,98 @@ arguments),this._chain)}});j.prototype.chain=function(){this._chain=!0;return th
   })();
   Model = (function() {
     function Model() {
-      var build_observable, con, constraint, fn, method, name, observable, options, validators, _fn, _fn2, _i, _j, _k, _len, _len2, _len3, _priCounter, _ref, _ref10, _ref11, _ref12, _ref2, _ref3, _ref4, _ref5, _ref6, _ref7, _ref8, _ref9;
+      var build_observable, con, constraint, fn, method, name, observable, options, validators, _cnCounter, _fn, _fn2, _i, _j, _k, _len, _len2, _len3, _priCounter, _ref, _ref10, _ref11, _ref12, _ref2, _ref3, _ref4, _ref5, _ref6, _ref7, _ref8, _ref9;
+      this.notifyObs = function(obs, preCn) {
+        var cn, _i, _len, _ref, _results;
+        _ref = this[obs].cnToNotify;
+        _results = [];
+        for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+          cn = _ref[_i];
+          _results.push(cn !== preCn ? this.notifyCn(cn, obs) : void 0);
+        }
+        return _results;
+      };
+      this.notifyCn = function(cn, preObs) {
+        var method, minMethod, minStr, name, newStr, oldMethod, oldStr, oldValue, _i, _j, _len, _len2, _ref, _ref2;
+        oldMethod = cn.currentMethod;
+        if (oldMethod !== void 0) {
+          oldValue = this[oldMethod.output].state();
+          oldStr = this[oldMethod.output].wkStrength;
+        }
+        minStr = Infinity;
+        minMethod = void 0;
+        _ref = cn.methods;
+        for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+          method = _ref[_i];
+          if (this[method.output].wkStrength < minStr) {
+            minStr = this[method.output].wkStrength;
+            minMethod = method;
+          }
+        }
+        if (minStr === oldStr) {
+          minMethod = oldMethod;
+        }
+        newStr = Infinity;
+        if (minMethod !== oldMethod && oldMethod !== void 0 && oldMethod.output !== preObs) {
+          this[oldMethod.output].wkStrength = this[oldMethod.output].priority();
+        }
+        _ref2 = cn.methods;
+        for (_j = 0, _len2 = _ref2.length; _j < _len2; _j++) {
+          method = _ref2[_j];
+          if (method === minMethod) {
+            continue;
+          }
+          if (this[method.output].wkStrength < newStr) {
+            newStr = this[method.output].wkStrength;
+          }
+        }
+        if (minMethod === void 0) {
+          throw new Error("The graph is over constrainted.");
+        } else {
+          if (minMethod.condition !== void 0) {
+            if (minMethod.condition.apply(this, (function() {
+              var _k, _len3, _ref3, _results;
+              _ref3 = minMethod.inputs;
+              _results = [];
+              for (_k = 0, _len3 = _ref3.length; _k < _len3; _k++) {
+                name = _ref3[_k];
+                _results.push(ko.utils.unwrapObservable(this[name]));
+              }
+              return _results;
+            }).call(this)) !== true) {
+              if (cn.currentMethod === void 0) {
+                return null;
+              }
+              cn.currentMethod = void 0;
+              this[oldMethod.output].wkStrength = this[oldMethod.output].priority();
+              this.notifyObs(oldMethod.output, cn);
+              return null;
+            }
+          }
+          this[minMethod.output].state(minMethod.body.apply(this, (function() {
+            var _k, _len3, _ref3, _results;
+            _ref3 = minMethod.inputs;
+            _results = [];
+            for (_k = 0, _len3 = _ref3.length; _k < _len3; _k++) {
+              name = _ref3[_k];
+              _results.push(ko.utils.unwrapObservable(this[name]));
+            }
+            return _results;
+          }).call(this)));
+          if (minMethod === oldMethod) {
+            if (this[minMethod.output].state() === oldValue && newStr === oldStr) {
+              return null;
+            }
+          }
+          cn.currentMethod = minMethod;
+          this[minMethod.output].wkStrength = newStr;
+          this.notifyObs(minMethod.output, cn);
+          return null;
+        }
+      };
       this.errors = new Errors();
       _priCounter = 0;
+      _cnCounter = 0;
       build_observable = function(name, observable_kind, initial_value) {
         var argure_observable, priority, state, _ref;
         state = observable_kind(initial_value);
@@ -301,8 +430,15 @@ arguments),this._chain)}});j.prototype.chain=function(){this._chain=!0;return th
             return state();
           },
           write: function(value) {
+            var cn, _i, _len, _ref;
             priority(++_priCounter);
+            argure_observable.wkStrength = _priCounter;
             state(value);
+            _ref = this[name].cnToNotify;
+            for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+              cn = _ref[_i];
+              this.notifyCn(cn);
+            }
             return null;
           },
           owner: this
@@ -386,7 +522,8 @@ arguments),this._chain)}});j.prototype.chain=function(){this._chain=!0;return th
       };
       return this._delays.push(fn);
     };
-    Argure.Extensions.Knockout.call(Model);
+    Argure.Extensions.DeltaBlueSolver.call(Model);
+    Argure.Extensions.DeltaBlueObservable.call(Model);
     Argure.Extensions.Validate.call(Model);
     Model.include = function(mixin) {
       if (typeof mixin !== "function") {
