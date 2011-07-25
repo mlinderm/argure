@@ -1,5 +1,39 @@
+@import "compass/typography/lists/bullets";
 @import "blueprint/form";
 
+$input-width: 300px;
+$textarea-width: $input-width;
+$textarea-height: 250px;
+$select-width: 200px; 
+
+@mixin ui-form-sizes {
+  @include blueprint-form-sizes($input-width, $textarea-width, $textarea-height);
+	select {
+		width: $select-width;
+	} 
+}
+
+
 .ui-form {
-	@include blueprint-form;
+	@include blueprint-form-layout;
+  @include blueprint-form-borders;
+  @include ui-form-sizes;
+
+	label {
+		display: block;
+	}
+
+	ul {
+		@include no-bullets;
+	}
+
+	.argure-error-message {
+		nl {
+			margin: 0;
+			li {
+				list-style-type: decimal;
+			}
+		}
+	}
+
 }

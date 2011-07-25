@@ -17,8 +17,18 @@ apply_knockout_solver = ->
 apply_validate_extensions = ->
 	ko.bindingHandlers.validate ?=
 		update: (element, valueAccessor, allBindingsAccessor, viewModel) ->
+			value = valueAccessor()
+			$(element).children('.argure-error-message').remove()
+			if value.errors()  # Insert error messages if they exist
+				$(element).prepend """
+				<div class='argure-error-message'>
+					<strong>Errors Detected:</strong>
+					<nl>
+						#{"<li>#{msg}</li>" for msg in viewModel.errors.get(value.observableName)}
+					</nl>
+				</div>
+				"""
 			ko.bindingHandlers.css.update element, (->
-				value = valueAccessor()
 				{ "ui-state-error": value.errors } 
 			), allBindingsAccessor, viewModel
 
@@ -67,7 +77,7 @@ apply_set_extensions = ->
 			ko.bindingHandlers.template.update element, (->
 				name: value.observableName + "Template"
 				foreach: value
-				templateOptions: { parentCollection: value }
+				templateOptions: { parentCollection: value, uqId: _.uniqueId() }
 			), allBindingsAccessor, viewModel
 # /SetExtensions
 

@@ -16,15 +16,18 @@
 				<li>
 					<fieldset>
 						<legend>Define Analysis Panel</legend>
-						<label>Select Panel Files
-							<select data-bind='collectionMultiSelect: panelFiles, optionsText: "name"' multiple=multiple></select>
-						</label>
-						<label>Select Reference Files
-							<select data-bind='collectionMultiSelect: refFiles, optionsText: "name"' multiple=multiple></select>
-						</label>
-						<label>Select Fold Change Parameters
-							<select data-bind='collectionMultiSelect: foldParams' multiple=multiple></select>
-						</label>
+						<div class="ui-horizontal">
+							<label for="panelFiles${$item.uqId}">Select Panel Files</label>
+							<select id="panelFiles${$item.uqId}" data-bind='collectionMultiSelect: panelFiles, optionsText: "name"' multiple="multiple"></select>
+						</div>
+						<div class="ui-horizontal">
+							<label for="refFiles${$item.uqId}">Select Reference Files</label>
+							<select id="refFiles${$item.uqId}" data-bind='collectionMultiSelect: refFiles, optionsText: "name"' multiple="multiple"></select>
+						</div>	
+						<div class="ui-horizontal">
+							<label for="foldParams${$item.uqId}">Select Fold Change Parameters</label>
+							<select id="foldParams${$item.uqId}" data-bind='collectionMultiSelect: foldParams' multiple="multiple"></select>
+						</div>	
 						<button data-bind="click: function() { $item.parentCollection.remove(this); }">Delete Panel</button>
 					</fieldset>
 				</li>
@@ -34,31 +37,27 @@
 				<form class="ui-form">
 					<fieldset>
 						<legend>Setup SPADE Analysis</legend>
-						<label>Select Files for Analysis
-							<select data-bind='collectionMultiSelect: files, optionsText: "name"' multiple='multiple' name='slctdFiles'></select>
-						</label>
-						<label>Select Clustering Parameters
-							<select data-bind='collectionMultiSelect: clusterParams' multiple='multiple' name='clustParams'></select>
-						</label>
-						<h3>Panels</h3>
-						<ul data-bind='collectionTemplate: panels, validate: panels'></ul>
+						<div class="ui-horizontal">
+							<label for='slctdFiles'>Select Files for Analysis</label>
+							<select id='slctdFiles' data-bind='collectionMultiSelect: files, optionsText: "name"' multiple='multiple'></select>
+						</div>
+						<div class="ui-horizontal-last">
+							<label for='clustParams'>Select Clustering Parameters</label>
+							<select id='clustParams' data-bind='collectionMultiSelect: clusterParams' multiple='multiple' name='clustParams'></select>
+						</div>
+						<ul id='panels' data-bind='collectionTemplate: panels, validate: panels'></ul>
 						<button data-bind="click: create_panel">Create Another Panel</button>
 					</fieldset>
 				</form>
 			</script>
 
-			<h1>
-				SPADE Command Synthesis
-			</h1>
-			<div id="spade_main" data-bind='template: "spadeTemplate"'> 
-			</div>
-
+			<div id="spade_main" data-bind='template: "spadeTemplate"' class='ui-widget'></div>
 
 			<script type="text/coffeescript" charset="utf-8">
 	
 				class SpadePanel extends Argure.Model
-					constructor: (@panelFiles_opts) ->
-						super()
+					constructor: (parent=undefined, @panelFiles_opts) ->
+						super(parent)
 
 					common_params: (files) ->
 						_.intersect.apply _, (f.pN for f in files)
@@ -70,9 +69,9 @@
 					@collectionMultiSelect 'foldParams'
 
 					@relate (c) ->
-						c.method 'refFiles_opts = if panelFiles_slct.length then panelFiles_slct else []'
+						c.method 'refFiles_opts = if panelFiles_slct.length > 1 then panelFiles_slct else []'
 					@relate (c) ->
-						c.method 'foldParams_opts = common_params(panelFiles_slct)'
+						c.method 'foldParams_opts = if refFiles_slct.length then common_params(panelFiles_slct) else []'
 
 
 				# /SpadePanel
@@ -80,9 +79,9 @@
 				class Spade extends Argure.Model
 					constructor: (@files_opts) ->
 						super()
-						@create_panel()
+						@create_panel @
 
-					create_panel: -> @panels.push(new SpadePanel(@files_slct))
+					create_panel: -> @panels.push(new SpadePanel @, @files_slct)
 					common_params: (files) ->
 						_.intersect.apply _, (f.pN for f in files)
 

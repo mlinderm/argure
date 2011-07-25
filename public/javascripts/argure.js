@@ -69,9 +69,22 @@ arguments),this._chain)}});j.prototype.chain=function(){this._chain=!0;return th
     var _base, _ref;
     return (_ref = (_base = ko.bindingHandlers).validate) != null ? _ref : _base.validate = {
       update: function(element, valueAccessor, allBindingsAccessor, viewModel) {
+        var msg, value;
+        value = valueAccessor();
+        $(element).children('.argure-error-message').remove();
+        if (value.errors()) {
+          $(element).prepend("<div class='argure-error-message'>\n	<strong>Errors Detected:</strong>\n	<nl>\n		" + ((function() {
+            var _i, _len, _ref2, _results;
+            _ref2 = viewModel.errors.get(value.observableName);
+            _results = [];
+            for (_i = 0, _len = _ref2.length; _i < _len; _i++) {
+              msg = _ref2[_i];
+              _results.push("<li>" + msg + "</li>");
+            }
+            return _results;
+          })()) + "\n	</nl>\n</div>");
+        }
         return ko.bindingHandlers.css.update(element, (function() {
-          var value;
-          value = valueAccessor();
           return {
             "ui-state-error": value.errors
           };
@@ -146,7 +159,8 @@ arguments),this._chain)}});j.prototype.chain=function(){this._chain=!0;return th
             name: value.observableName + "Template",
             foreach: value,
             templateOptions: {
-              parentCollection: value
+              parentCollection: value,
+              uqId: _.uniqueId()
             }
           };
         }), allBindingsAccessor, viewModel);
@@ -268,6 +282,20 @@ arguments),this._chain)}});j.prototype.chain=function(){this._chain=!0;return th
           return m + k;
         }), 0);
       };
+      this.clear = function(name) {
+        if (name == null) {
+          name = void 0;
+        }
+        if (name != null) {
+          delete errors[name];
+        } else {
+          errors = {};
+        }
+        return this;
+      };
+      this.get = function(name) {
+        return errors[name];
+      };
       this.add = function(name, message) {
         var _ref;
         ((_ref = errors[name]) != null ? _ref : errors[name] = []).push(message);
@@ -277,9 +305,12 @@ arguments),this._chain)}});j.prototype.chain=function(){this._chain=!0;return th
     return Errors;
   })();
   Model = (function() {
-    function Model() {
+    function Model(parent) {
       var build_observable, con, constraint, fn, method, name, observable, options, validators, _fn, _fn2, _i, _j, _k, _len, _len2, _len3, _priCounter, _ref, _ref10, _ref11, _ref12, _ref2, _ref3, _ref4, _ref5, _ref6, _ref7, _ref8, _ref9;
-      this.errors = new Errors();
+      if (parent == null) {
+        parent = void 0;
+      }
+      this.errors = parent != null ? parent.errors : new Errors();
       _priCounter = 0;
       build_observable = function(name, observable_kind, initial_value) {
         var argure_observable, priority, state, _ref;
@@ -347,9 +378,11 @@ arguments),this._chain)}});j.prototype.chain=function(){this._chain=!0;return th
         this[name].errors = ko.dependentObservable(function() {
           var result, v, valid, _k, _len3;
           valid = true;
+          this.errors.clear(name);
           for (_k = 0, _len3 = validators.length; _k < _len3; _k++) {
             v = validators[_k];
             result = v.call(this);
+            this.errors.add(name, v.message);
             valid && (valid = result);
           }
           return !valid;

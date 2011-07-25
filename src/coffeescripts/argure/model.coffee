@@ -1,10 +1,15 @@
-# Compatibility method for Object.keys (https://developer.mozilla.org/en/JavaScript/Reference/Global_Objects/Object/keys)
 class Errors
 	constructor: ->
 		errors = {}
 		
 		@size = ->
 			_.reduce (errors[k].length for k in _.keys(errors)), ((m, k) -> m+k), 0
+		
+		@clear = (name=undefined) ->
+			if name? then delete errors[name] else errors = {}
+			@
+		@get = (name) ->
+			errors[name]
 		@add = (name, message) ->
 			(errors[name] ?= []).push message
 			@
@@ -13,10 +18,9 @@ class Errors
 
 
 class Model
-	constructor: ->
+	constructor: (parent=undefined)->
 
-		@errors = new Errors()
-
+		@errors = if parent? then parent.errors else new Errors()
 
 		_priCounter=0
 		build_observable = (name, observable_kind, initial_value) ->
@@ -64,8 +68,10 @@ class Model
 			do (name, validators) =>
 				@[name].errors = ko.dependentObservable ->
 					valid = true
+					@.errors.clear name
 					for v in validators
-						result = v.call(@)
+						result = v.call @
+						@.errors.add name, v.message
 						valid &&= result
 					return !valid  # Observable returns true if error, false otherwise
 				, @

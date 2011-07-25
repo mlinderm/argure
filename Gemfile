@@ -5,6 +5,7 @@ group :development do
 
 	require 'rbconfig'
 	if RbConfig::CONFIG['target_os'] =~ /darwin/i
+		gem 'growl'
 		gem 'rb-fsevent', '>= 0.4.0', :require => false
 	end
 	if RbConfig::CONFIG['target_os'] =~ /mswin|mingw/i
