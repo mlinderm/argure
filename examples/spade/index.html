@@ -87,8 +87,7 @@
 						if @errors.empty() then alert("Submitted") else alert("Errors still present")
 						false
 					
-					common_params: (files) ->
-						_.intersect.apply _, (f.pN for f in files)
+					common_params: (files) -> _.intersect.apply _, (f.pN for f in files)
 
 					@include Argure.Extensions.Set
 

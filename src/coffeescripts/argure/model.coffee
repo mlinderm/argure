@@ -21,16 +21,20 @@ class Errors
 class Model
 	constructor: (parent=undefined)->
 
-		@errors = if parent? then parent.errors else new Errors()
+		# Inherit errors and priority from "parent" Model
+		[@errors, @priority] = if parent? && parent instanceof Model
+			[parent.errors, parent.priority]
+		else
+			_priority_counter = 0
+			[new Errors(), ((inc=true) -> if inc then ++_priority_counter else _priority_counter)]
 
-		_priCounter=0
 		build_observable = (name, observable_kind, initial_value) ->
 			state    = observable_kind initial_value
-			priority = ko.observable 0
+			priority = ko.observable @priority(false)
 			argure_observable = ko.dependentObservable
 				read : -> state()
 				write: (value) ->
-					priority(++_priCounter)
+					priority(@priority())
 					state(value)
 					null
 				owner: @
@@ -72,7 +76,7 @@ class Model
 					@.errors.clear name
 					for v in validators
 						result = v.call @
-						@.errors.add name, v.message
+						@.errors.add name, v.message if !result
 						valid &&= result
 					return !valid  # Observable returns true if error, false otherwise
 				, @
@@ -110,7 +114,7 @@ class Model
 		@relations.push(methods)
 
 	@validate: (name, validator, message=undefined) ->
-		validator.message = message
+		validator.message = message ? "${name} failed validation"
 		((@validators ?= {})[name] ?= []).push(validator)
 		
 

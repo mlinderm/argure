@@ -309,22 +309,32 @@ arguments),this._chain)}});j.prototype.chain=function(){this._chain=!0;return th
   })();
   Model = (function() {
     function Model(parent) {
-      var build_observable, con, constraint, fn, method, name, observable, options, validators, _fn, _fn2, _i, _j, _k, _len, _len2, _len3, _priCounter, _ref, _ref10, _ref11, _ref12, _ref2, _ref3, _ref4, _ref5, _ref6, _ref7, _ref8, _ref9;
+      var build_observable, con, constraint, fn, method, name, observable, options, validators, _fn, _fn2, _i, _j, _k, _len, _len2, _len3, _priority_counter, _ref, _ref10, _ref11, _ref12, _ref13, _ref2, _ref3, _ref4, _ref5, _ref6, _ref7, _ref8, _ref9;
       if (parent == null) {
         parent = void 0;
       }
-      this.errors = parent != null ? parent.errors : new Errors();
-      _priCounter = 0;
+      _ref = (parent != null) && parent instanceof Model ? [parent.errors, parent.priority] : (_priority_counter = 0, [
+        new Errors(), (function(inc) {
+          if (inc == null) {
+            inc = true;
+          }
+          if (inc) {
+            return ++_priority_counter;
+          } else {
+            return _priority_counter;
+          }
+        })
+      ]), this.errors = _ref[0], this.priority = _ref[1];
       build_observable = function(name, observable_kind, initial_value) {
-        var argure_observable, priority, state, _ref;
+        var argure_observable, priority, state, _ref2;
         state = observable_kind(initial_value);
-        priority = ko.observable(0);
+        priority = ko.observable(this.priority(false));
         argure_observable = ko.dependentObservable({
           read: function() {
             return state();
           },
           write: function(value) {
-            priority(++_priCounter);
+            priority(this.priority());
             state(value);
             return null;
           },
@@ -334,35 +344,35 @@ arguments),this._chain)}});j.prototype.chain=function(){this._chain=!0;return th
         argure_observable.state = state;
         argure_observable.priority = priority;
         argure_observable.errors = false;
-        if ((_ref = this.constructor.build_observable_callback) != null) {
-          _ref.call(argure_observable);
+        if ((_ref2 = this.constructor.build_observable_callback) != null) {
+          _ref2.call(argure_observable);
         }
         return argure_observable;
       };
-      _ref2 = (_ref = this.constructor.observables) != null ? _ref : {};
-      for (name in _ref2) {
-        options = _ref2[name];
+      _ref3 = (_ref2 = this.constructor.observables) != null ? _ref2 : {};
+      for (name in _ref3) {
+        options = _ref3[name];
         if (this[name]) {
           continue;
         }
         this[name] = build_observable.call(this, name, ko.observable, options.initial);
         true;
       }
-      _ref4 = (_ref3 = this.constructor.collections) != null ? _ref3 : {};
-      for (name in _ref4) {
-        options = _ref4[name];
+      _ref5 = (_ref4 = this.constructor.collections) != null ? _ref4 : {};
+      for (name in _ref5) {
+        options = _ref5[name];
         if (this[name]) {
           continue;
         }
         observable = build_observable.call(this, name, ko.observableArray, options.initial);
-        _ref5 = ["pop", "push", "reverse", "shift", "sort", "splice", "unshift", "slice", "remove", "removeAll", "destroy", "destroyAll", "indexOf"];
+        _ref6 = ["pop", "push", "reverse", "shift", "sort", "splice", "unshift", "slice", "remove", "removeAll", "destroy", "destroyAll", "indexOf"];
         _fn = function(observable, method) {
           return observable[method] = function() {
             return observable.state[method].apply(observable.state, arguments);
           };
         };
-        for (_i = 0, _len = _ref5.length; _i < _len; _i++) {
-          method = _ref5[_i];
+        for (_i = 0, _len = _ref6.length; _i < _len; _i++) {
+          method = _ref6[_i];
           _fn(observable, method);
           true;
         }
@@ -370,13 +380,13 @@ arguments),this._chain)}});j.prototype.chain=function(){this._chain=!0;return th
         true;
       }
       this._methods = [];
-      _ref7 = (_ref6 = this.constructor.relations) != null ? _ref6 : [];
-      for (_j = 0, _len2 = _ref7.length; _j < _len2; _j++) {
-        constraint = _ref7[_j];
+      _ref8 = (_ref7 = this.constructor.relations) != null ? _ref7 : [];
+      for (_j = 0, _len2 = _ref8.length; _j < _len2; _j++) {
+        constraint = _ref8[_j];
         con = new Argure.Constraint(constraint);
-        this._methods.push((_ref8 = this.constructor.build_constraint_callback) != null ? _ref8.call(this, con) : void 0);
+        this._methods.push((_ref9 = this.constructor.build_constraint_callback) != null ? _ref9.call(this, con) : void 0);
       }
-      _ref10 = (_ref9 = this.constructor.validators) != null ? _ref9 : {};
+      _ref11 = (_ref10 = this.constructor.validators) != null ? _ref10 : {};
       _fn2 = __bind(function(name, validators) {
         this[name].errors = ko.dependentObservable(function() {
           var result, v, valid, _k, _len3;
@@ -385,20 +395,22 @@ arguments),this._chain)}});j.prototype.chain=function(){this._chain=!0;return th
           for (_k = 0, _len3 = validators.length; _k < _len3; _k++) {
             v = validators[_k];
             result = v.call(this);
-            this.errors.add(name, v.message);
+            if (!result) {
+              this.errors.add(name, v.message);
+            }
             valid && (valid = result);
           }
           return !valid;
         }, this);
         return null;
       }, this);
-      for (name in _ref10) {
-        validators = _ref10[name];
+      for (name in _ref11) {
+        validators = _ref11[name];
         _fn2(name, validators);
       }
-      _ref12 = (_ref11 = this.constructor._delays) != null ? _ref11 : {};
-      for (_k = 0, _len3 = _ref12.length; _k < _len3; _k++) {
-        fn = _ref12[_k];
+      _ref13 = (_ref12 = this.constructor._delays) != null ? _ref12 : {};
+      for (_k = 0, _len3 = _ref13.length; _k < _len3; _k++) {
+        fn = _ref13[_k];
         fn.call(this);
       }
     }
@@ -466,7 +478,7 @@ arguments),this._chain)}});j.prototype.chain=function(){this._chain=!0;return th
       if (message == null) {
         message = void 0;
       }
-      validator.message = message;
+      validator.message = message != null ? message : "${name} failed validation";
       return ((_ref = (_base = ((_ref2 = this.validators) != null ? _ref2 : this.validators = {}))[name]) != null ? _ref : _base[name] = []).push(validator);
     };
     return Model;
