@@ -12,6 +12,7 @@ class Errors
 #/Errors
 
 
+
 class Model
 	constructor: ->
 		@notifyObs = (obs,preCn) ->
@@ -22,25 +23,30 @@ class Model
 		@notifyCn = (cn,preObs) ->
 			oldMethod = cn.currentMethod
 			if(oldMethod!=undefined)
-				oldValue = @[oldMethod.output].state()
-				oldStr = @[oldMethod.output].wkStrength
-			minStr = Infinity
-			minMethod = undefined
-			for method in cn.methods
-				if @[method.output].wkStrength < minStr
-					minStr = @[method.output].wkStrength
-					minMethod = method
-			if minStr == oldStr
-				minMethod = oldMethod # Try to keep the old one if possible
+				oldValue = @[oldMethod.output[0]].state()
+				oldStr = @[oldMethod.output[0]].wkStrength
+			wkStrengthCorrect = false
+			while (!wkStrengthCorrect)
+				wkStrengthCorrect = true
+				minStr = Infinity
+				minMethod = undefined
+				for method in cn.methods
+					if @[method.output[0]].wkStrength < minStr
+						minStr = @[method.output[0]].wkStrength
+						minMethod = method
+				if minStr == oldStr
+					minMethod = oldMethod # Try to keep the old one if possible
+				if minMethod != oldMethod and oldMethod != undefined and oldMethod.output[0] != preObs
+					wkStrengthCorrect = false if @[oldMethod.output[0]].wkStrength != @[oldMethod.output[0]].priority()
+					@[oldMethod.output[0]].wkStrength = @[oldMethod.output[0]].priority() # The original output[0] is free
+																						  # Its stay constraint is redirected,	
+									 											          # And its walk about strength should be equal to its priority
 			newStr = Infinity
-			if minMethod != oldMethod and oldMethod != undefined and oldMethod.output != preObs
-				@[oldMethod.output].wkStrength = @[oldMethod.output].priority() # The original output is free now, so its stay constraint is redirected,
-									 											# so its walk about strength should be equal to its priority
 			for method in cn.methods
 				if method == minMethod
 					continue
-				if @[method.output].wkStrength < newStr
-					newStr = @[method.output].wkStrength
+				if @[method.output[0]].wkStrength < newStr
+					newStr = @[method.output[0]].wkStrength
 
 			if minMethod == undefined
 				throw new Error("The graph is over constrainted.")
@@ -50,17 +56,17 @@ class Model
 						if cn.currentMethod ==undefined
 							return null
 						cn.currentMethod = undefined
-						@[oldMethod.output].wkStrength = @[oldMethod.output].priority()
-						@notifyObs(oldMethod.output, cn)
+						@[oldMethod.output[0]].wkStrength = @[oldMethod.output[0]].priority()
+						@notifyObs(oldMethod.output[0], cn)
 						return null
-				@[minMethod.output].state minMethod.body.apply(this, (ko.utils.unwrapObservable(@[name]) for name in minMethod.inputs)) # Execute Method
+				@[minMethod.output[0]].state minMethod.body.apply(this, (ko.utils.unwrapObservable(@[name]) for name in minMethod.inputs)) # Execute Method
 #				cnGraph.detectCycle()
 				if(minMethod == oldMethod)
-					if(@[minMethod.output].state() == oldValue and newStr == oldStr)
+					if(@[minMethod.output[0]].state() == oldValue and newStr == oldStr)
 						return null
 				cn.currentMethod = minMethod
-				@[minMethod.output].wkStrength = newStr
-				@notifyObs(minMethod.output,cn)
+				@[minMethod.output[0]].wkStrength = newStr
+				@notifyObs(minMethod.output[0],cn)
 				return null
 
 
@@ -80,7 +86,7 @@ class Model
 					argure_observable.wkStrength = _priCounter
 					state(value)
 					for cn in @[name].cnToNotify
-						@notifyCn(cn)
+						@notifyCn(cn,name)
 					return null
 				owner: @
 			argure_observable.observableName = name

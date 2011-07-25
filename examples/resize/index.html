@@ -56,8 +56,8 @@
 						c.method 'absWidth = (relWidth / 100.0) * initWidth'
 						c.method 'relWidth = (absWidth / initWidth) * 100.0' 
 					@relate (c) ->
-						c.method 'relHeight = if ratio then relWidth else relHeight'
-						c.method 'relWidth  = if ratio then relHeight else relWidth'
+						c.method 'relHeight = if ratio then relWidth else relHeight',undefined, (ratio) -> ratio
+						c.method 'relWidth  = if ratio then relHeight else relWidth',undefined, (ratio)-> ratio
 
 				this.resizer = new Resizer(1000, 1000)
 				ko.applyBindings(this.resizer)
