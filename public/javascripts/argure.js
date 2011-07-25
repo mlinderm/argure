@@ -330,7 +330,7 @@ arguments),this._chain)}});j.prototype.chain=function(){this._chain=!0;return th
   })();
   Model = (function() {
     function Model() {
-      var build_observable, con, constraint, fn, method, name, observable, options, validators, _cnCounter, _fn, _fn2, _i, _j, _k, _len, _len2, _len3, _priCounter, _ref, _ref10, _ref11, _ref12, _ref2, _ref3, _ref4, _ref5, _ref6, _ref7, _ref8, _ref9;
+      var build_observable, con, constraint, fn, method, name, observable, options, validators, _cnCounter, _fn, _fn2, _fn3, _i, _j, _k, _len, _len2, _len3, _priCounter, _ref, _ref10, _ref11, _ref12, _ref13, _ref2, _ref3, _ref4, _ref5, _ref6, _ref7, _ref8, _ref9;
       this.notifyObs = function(obs, preCn) {
         var cn, _i, _len, _ref, _results;
         _ref = this[obs].cnToNotify;
@@ -519,6 +519,21 @@ arguments),this._chain)}});j.prototype.chain=function(){this._chain=!0;return th
       for (_k = 0, _len3 = _ref12.length; _k < _len3; _k++) {
         fn = _ref12[_k];
         fn.call(this);
+      }
+      _ref13 = this.constructor.observables;
+      _fn3 = __bind(function(name, options) {
+        var cn, _l, _len4, _ref14, _results;
+        _ref14 = this[name].cnToNotify;
+        _results = [];
+        for (_l = 0, _len4 = _ref14.length; _l < _len4; _l++) {
+          cn = _ref14[_l];
+          _results.push(this.notifyCn(cn));
+        }
+        return _results;
+      }, this);
+      for (name in _ref13) {
+        options = _ref13[name];
+        _fn3(name, options);
       }
     }
     Model._delayed = function(fn) {

@@ -135,7 +135,10 @@ class Model
 		# Apply delays
 		for fn in @.constructor._delays ? {}
 			fn.call(@)
-
+		for name, options of @.constructor.observables
+			do (name, options) =>  # Create closure around each observable's name and options
+				for cn in @[name].cnToNotify
+					@notifyCn(cn)
 
 	@_delayed: (fn) ->
 		@_delays ?= []
