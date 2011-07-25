@@ -64,7 +64,9 @@ apply_set_extensions = ->
 			if ko.isObservable(@[name+'_opts']) && ko.observable(@[name+'_slct'])
 				@[name+'_opts'].state.subscribe (value) =>
 					orphans = (item for item in @[name+'_slct'].state() when value.indexOf(item) < 0)
-					this[name+'_slct'].state.removeAll(orphans) if orphans.length
+					if orphans.length
+						this[name+'_slct'].state.removeAll(orphans)
+						this.notifyObs(name+'_slct')
 					null
 
 		

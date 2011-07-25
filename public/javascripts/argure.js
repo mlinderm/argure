@@ -155,6 +155,7 @@ arguments),this._chain)}});j.prototype.chain=function(){this._chain=!0;return th
               }).call(this);
               if (orphans.length) {
                 this[name + '_slct'].state.removeAll(orphans);
+                this.notifyObs(name + '_slct');
               }
               return null;
             }, this));
