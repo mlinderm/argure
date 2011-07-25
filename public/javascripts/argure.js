@@ -267,6 +267,9 @@ arguments),this._chain)}});j.prototype.chain=function(){this._chain=!0;return th
     function Errors() {
       var errors;
       errors = {};
+      this.empty = function() {
+        return this.size() === 0;
+      };
       this.size = function() {
         var k;
         return _.reduce((function() {

@@ -1,10 +1,11 @@
 class Errors
 	constructor: ->
 		errors = {}
-		
+	
+		@empty = ->
+			@size() == 0
 		@size = ->
 			_.reduce (errors[k].length for k in _.keys(errors)), ((m, k) -> m+k), 0
-		
 		@clear = (name=undefined) ->
 			if name? then delete errors[name] else errors = {}
 			@
