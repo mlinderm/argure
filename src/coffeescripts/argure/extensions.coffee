@@ -2,6 +2,19 @@
 # Default Knockout "Constraint" Solver
 #
 apply_knockout_solver = ->
+	@build_observable_callback ?= (name, observable_kind, initial_value) ->
+		state = observable_kind initial_value
+		argure_observable = ko.dependentObservable
+			read : -> state()
+			write: (value) ->
+				state(value)
+				return null
+			owner: @
+		argure_observable.observableName = name
+		argure_observable.state = state
+		argure_observable.errors = false  # Default is no errors
+		return argure_observable
+	
 	@build_constraint_callback ?= (constraint) ->
 		for method in constraint.methods
 			do (method) =>
@@ -9,6 +22,106 @@ apply_knockout_solver = ->
 					@[method.output].state method.body.apply(@, (ko.utils.unwrapObservable(@[name]) for name in method.inputs))
 					null
 				, @
+
+
+#
+# DeltaBlue multi-way constraint solver 
+#
+apply_deltaBlue_solver = ->
+	@build_observable_callback ?= (name, observable_kind, initial_value) ->
+		state    = observable_kind initial_value
+		priority = ko.observable @priority(false)
+		wkStrength = 0
+		cnToNotify = []
+		argure_observable = ko.dependentObservable
+			read : -> state()
+			write: (value) ->
+				priority(@priority())
+				wkStrength = @priority(false)
+				state(value)
+				for cn in cnToNotify
+					@notifyCn(cn,name)
+				return null
+			owner: @
+		argure_observable.observableName = name
+		argure_observable.state = state
+		argure_observable.errors = false  # Default is no errors
+		argure_observable.priority = priority
+		argure_observable.wkStrength = (value) ->
+			wkStrength = value if value?
+			wkStrength
+		argure_observable.cnToNotify = cnToNotify
+		return argure_observable
+	
+	@build_constraint_callback ?= (constraint)->
+		for method in constraint.methods
+			do (method) =>
+				for input in method.inputs
+					if @[input].cnToNotify != undefined and @[input].cnToNotify.indexOf(constraint)==-1
+						@[input].cnToNotify.push(constraint)
+					if @[method.output].cnToNotify != undefined and @[method.output].cnToNotify.indexOf(constraint)==-1
+						@[method.output].cnToNotify.push(constraint)
+
+	@_delayed ->
+		@notifyObs = (obs,preCn) ->
+			for cn in @[obs].cnToNotify
+				if cn != preCn
+					@notifyCn(cn,obs)
+
+		@notifyCn = (cn,preObs) ->
+			oldMethod = cn.currentMethod
+			if(oldMethod!=undefined)
+				oldValue = @[oldMethod.output[0]].state()
+				oldStr = @[oldMethod.output[0]].wkStrength()
+			wkStrengthCorrect = false
+			while (!wkStrengthCorrect)
+				wkStrengthCorrect = true
+				minStr = Infinity
+				minMethod = undefined
+				for method in cn.methods
+					if @[method.output[0]].wkStrength() < minStr
+						minStr = @[method.output[0]].wkStrength()
+						minMethod = method
+				if minStr == oldStr
+					minMethod = oldMethod # Try to keep the old one if possible
+				if minMethod != oldMethod and oldMethod != undefined and oldMethod.output[0] != preObs
+					wkStrengthCorrect = false if @[oldMethod.output[0]].wkStrength() != @[oldMethod.output[0]].priority()
+					@[oldMethod.output[0]].wkStrength(@[oldMethod.output[0]].priority()) # The original output[0] is free
+																						  # Its stay constraint is redirected,	
+									 											          # And its walk about strength should be equal to its priority
+			newStr = Infinity
+			for method in cn.methods
+				if method == minMethod
+					continue
+				if @[method.output[0]].wkStrength() < newStr
+					newStr = @[method.output[0]].wkStrength()
+
+			if minMethod == undefined
+				throw new Error("The graph is over constrainted.")
+			else
+				if minMethod.condition != undefined
+					if minMethod.condition.apply(this, (ko.utils.unwrapObservable(@[name]) for name in minMethod.inputs)) != true # Execute Condition
+						if cn.currentMethod ==undefined
+							return null
+						cn.currentMethod = undefined
+						@[oldMethod.output[0]].wkStrength(@[oldMethod.output[0]].priority())
+						@notifyObs(oldMethod.output[0], cn)
+						return null
+				@[minMethod.output[0]].state minMethod.body.apply(this, (ko.utils.unwrapObservable(@[name]) for name in minMethod.inputs)) # Execute Method
+#				cnGraph.detectCycle()
+				if(minMethod == oldMethod)
+					if(@[minMethod.output[0]].state() == oldValue and newStr == oldStr)
+						return null
+				cn.currentMethod = minMethod
+				@[minMethod.output[0]].wkStrength(newStr)
+				@notifyObs(minMethod.output[0],cn)
+				return null
+
+
+	@_delayed ->
+		for name, options of @.constructor.observables
+			for cn in @[name].cnToNotify
+				@notifyCn(cn)
 
 
 #
@@ -56,8 +169,10 @@ apply_set_extensions = ->
 		@_delayed ->
 			if ko.isObservable(@[name+'_opts']) && ko.observable(@[name+'_slct'])
 				@[name+'_opts'].state.subscribe (value) =>
-					orphans = _.difference @[name+'_slct'].state(), value
-					this[name+'_slct'].state.removeAll(orphans) if orphans.length
+					orphans = (item for item in @[name+'_slct'].state() when value.indexOf(item) < 0)
+					if orphans.length
+						this[name+'_slct'].state.removeAll(orphans)
+						this.notifyObs(name+'_slct')
 					null
 
 		
@@ -83,5 +198,6 @@ apply_set_extensions = ->
 
 namespace 'Argure.Extensions', (exports) ->
 	exports.Knockout = apply_knockout_solver
+	exports.DeltaBlue = apply_deltaBlue_solver
 	exports.Set = apply_set_extensions
 	exports.Validate = apply_validate_extensions

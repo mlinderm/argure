@@ -18,43 +18,27 @@ class Errors
 #/Errors
 
 
+
 class Model
 	constructor: (parent=undefined)->
-
+		
 		# Inherit errors and priority from "parent" Model
 		[@errors, @priority] = if parent? && parent instanceof Model
 			[parent.errors, parent.priority]
 		else
 			_priority_counter = 0
 			[new Errors(), ((inc=true) -> if inc then ++_priority_counter else _priority_counter)]
-
-		build_observable = (name, observable_kind, initial_value) ->
-			state    = observable_kind initial_value
-			priority = ko.observable @priority(false)
-			argure_observable = ko.dependentObservable
-				read : -> state()
-				write: (value) ->
-					priority(@priority())
-					state(value)
-					null
-				owner: @
-			argure_observable.observableName = name
-			argure_observable.state = state
-			argure_observable.priority = priority
-			argure_observable.errors = false  # Default is no errors
-			@.constructor.build_observable_callback?.call argure_observable
-			return argure_observable
-
+		
 		# Convert observables into corresponding knockout observables
 		for name, options of @.constructor.observables ? {}
 			continue if @[name]
-			@[name] = build_observable.call @, name, ko.observable, options.initial
+			@[name] = @.constructor.build_observable_callback.call @, name, ko.observable, options.initial
 			true
 
 		# Convert collections into corresponding knockout observable arrays
 		for name, options of @.constructor.collections ? {}
 			continue if @[name]
-			observable = build_observable.call @, name, ko.observableArray, options.initial
+			observable = @.constructor.build_observable_callback.call @, name, ko.observableArray, options.initial
 			for method in ["pop", "push", "reverse", "shift", "sort", "splice", "unshift", "slice", "remove", "removeAll", "destroy", "destroyAll", "indexOf"]
 				do (observable, method) ->
 					observable[method] = ->
@@ -86,13 +70,12 @@ class Model
 		# Apply delays
 		for fn in @.constructor._delays ? {}
 			fn.call(@)
-
-
+		
 	@_delayed: (fn) ->
 		@_delays ?= []
 		@_delays.push(fn)
 
-	Argure.Extensions.Knockout.call @
+	Argure.Extensions.DeltaBlue.call @
 	Argure.Extensions.Validate.call @  # Add validate extensions by default
 	@include: (mixin) ->
 		throw new Error("Mixin must be a function") if typeof mixin != "function"

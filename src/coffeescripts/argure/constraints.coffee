@@ -21,15 +21,17 @@ extract_operands = (ast) ->
 
 
 class Method
-	constructor: (@inputs, @output, @body) ->
+	constructor: (@inputs, @output, @body, @condition) ->
 		
 
 class Constraint
-	constructor: (formulas) ->
+	constructor: (formulas, id) ->
 		@methods = []
+		@id= id
+		@currentMethod = undefined
 		formulas.call(this, this)
 	
-	method: (args_or_code, body) ->
+	method: (args_or_code, body, condition) ->
 		if typeof args_or_code == "string"
 			ast = CoffeeScript.nodes args_or_code
 		
@@ -39,14 +41,14 @@ class Constraint
 				output = extract_operands assignment.variable  # LHS
 				inputs = extract_operands assignment.value     # RHS
 				eval "body = function(#{inputs.join ','}) { return #{assignment.value.compile()}; }"  # Convert RHS to function
-				@methods.push new Method inputs, output, body
+				@methods.push new Method inputs, output, body, condition
 			else
 				throw new Error "Ill formed constraint method: no inputs or output found" if !ev.inputs? || !ev.output?
 
 		else if typeof args_or_code == "object"
 			for o, i of args_or_code
 				[output, inputs] = [o, i]
-			@methods.push new Method inputs, output, body
+			@methods.push new Method inputs, output, body, condition
 		else
 			throw new Error("Unsupported method specification")
 
