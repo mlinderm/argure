@@ -32,20 +32,23 @@ class Model
 		# Convert observables into corresponding knockout observables
 		for name, options of @.constructor.observables ? {}
 			continue if @[name]
-			@[name] = @.constructor.build_observable_callback.call @, name, ko.observable, options.initial
-			true
+			observable = @.constructor.build_observable_callback.call @, name, ko.observable, options.initial
+			observable.errors = false  # Default is no errors
+			@[name] = observable
+			null
 
 		# Convert collections into corresponding knockout observable arrays
 		for name, options of @.constructor.collections ? {}
 			continue if @[name]
 			observable = @.constructor.build_observable_callback.call @, name, ko.observableArray, options.initial
+			observable.errors = false  # Default is no errors
 			for method in ["pop", "push", "reverse", "shift", "sort", "splice", "unshift", "slice", "remove", "removeAll", "destroy", "destroyAll", "indexOf"]
 				do (observable, method) ->
 					observable[method] = ->
 						observable.state[method].apply observable.state, arguments
 				true
 			@[name] = observable
-			true
+			null
 								
 		# Create dependent observables for relations (this is a crude way to do this)
 		@_methods = []

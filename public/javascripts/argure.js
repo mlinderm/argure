@@ -55,9 +55,8 @@ arguments),this._chain)}});j.prototype.chain=function(){this._chain=!0;return th
           },
           owner: this
         });
-        argure_observable.observableName = name;
+        argure_observable.cell = name;
         argure_observable.state = state;
-        argure_observable.errors = false;
         return argure_observable;
       };
     };
@@ -93,12 +92,12 @@ arguments),this._chain)}});j.prototype.chain=function(){this._chain=!0;return th
       _ref;
     } else {
       this.build_observable_callback = function(name, observable_kind, initial_value) {
-        var argure_observable, cnToNotify, priority, state, wkStrength;
+        var observable, priority, state, wkStrength, _constraints;
         state = observable_kind(initial_value);
         priority = ko.observable(this.priority(false));
         wkStrength = 0;
-        cnToNotify = [];
-        argure_observable = ko.dependentObservable({
+        _constraints = [];
+        observable = ko.dependentObservable({
           read: function() {
             return state();
           },
@@ -107,116 +106,117 @@ arguments),this._chain)}});j.prototype.chain=function(){this._chain=!0;return th
             priority(this.priority());
             wkStrength = this.priority(false);
             state(value);
-            for (_i = 0, _len = cnToNotify.length; _i < _len; _i++) {
-              cn = cnToNotify[_i];
+            for (_i = 0, _len = _constraints.length; _i < _len; _i++) {
+              cn = _constraints[_i];
               this.notifyCn(cn, name);
             }
             return null;
           },
           owner: this
         });
-        argure_observable.observableName = name;
-        argure_observable.state = state;
-        argure_observable.errors = false;
-        argure_observable.priority = priority;
-        argure_observable.wkStrength = function(value) {
+        observable.cell = name;
+        observable.state = state;
+        observable.priority = priority;
+        observable.wkStrength = function(value) {
           if (value != null) {
             wkStrength = value;
           }
           return wkStrength;
         };
-        argure_observable.cnToNotify = cnToNotify;
-        return argure_observable;
+        observable.constraints = function(value) {
+          if (value != null) {
+            _constraints = _.union(_constraints, value);
+          }
+          return _constraints;
+        };
+        return observable;
       };
     };
         if ((_ref2 = this.build_constraint_callback) != null) {
       _ref2;
     } else {
-      this.build_constraint_callback = function(constraint) {
-        var method, _i, _len, _ref3, _results;
-        _ref3 = constraint.methods;
-        _results = [];
+      this.build_constraint_callback = function(c) {
+        var i, method, _base, _base2, _i, _j, _len, _len2, _ref3, _ref4;
+        _ref3 = c.methods;
         for (_i = 0, _len = _ref3.length; _i < _len; _i++) {
           method = _ref3[_i];
-          _results.push(__bind(function(method) {
-            var input, _j, _len2, _ref4, _results2;
-            _ref4 = method.inputs;
-            _results2 = [];
-            for (_j = 0, _len2 = _ref4.length; _j < _len2; _j++) {
-              input = _ref4[_j];
-              if (this[input].cnToNotify !== void 0 && this[input].cnToNotify.indexOf(constraint) === -1) {
-                this[input].cnToNotify.push(constraint);
-              }
-              _results2.push(this[method.output].cnToNotify !== void 0 && this[method.output].cnToNotify.indexOf(constraint) === -1 ? this[method.output].cnToNotify.push(constraint) : void 0);
+          if (typeof (_base = this[method.output]).constraints === "function") {
+            _base.constraints(c);
+          }
+          _ref4 = method.inputs;
+          for (_j = 0, _len2 = _ref4.length; _j < _len2; _j++) {
+            i = _ref4[_j];
+            if (typeof (_base2 = this[i]).constraints === "function") {
+              _base2.constraints(c);
             }
-            return _results2;
-          }, this)(method));
+          }
         }
-        return _results;
+        return null;
       };
     };
     this._delayed(function() {
       this.notifyObs = function(obs, preCn) {
-        var cn, _i, _len, _ref3, _results;
-        _ref3 = this[obs].cnToNotify;
-        _results = [];
+        var cn, _i, _len, _ref3;
+        _ref3 = this[obs].constraints();
         for (_i = 0, _len = _ref3.length; _i < _len; _i++) {
           cn = _ref3[_i];
-          _results.push(cn !== preCn ? this.notifyCn(cn, obs) : void 0);
+          if (cn !== preCn) {
+            this.notifyCn(cn, obs);
+          }
         }
-        return _results;
+        return null;
       };
       return this.notifyCn = function(cn, preObs) {
-        var method, minMethod, minStr, name, newStr, oldMethod, oldStr, oldValue, wkStrengthCorrect, _i, _j, _len, _len2, _ref3, _ref4;
+        var m, method, minMethod, minStr, name, newStrength, oldMethod, oldStrength, oldValue, wkStrengthCorrect, _i, _len, _ref3, _ref4;
         oldMethod = cn.currentMethod;
-        if (oldMethod !== void 0) {
-          oldValue = this[oldMethod.output[0]].state();
-          oldStr = this[oldMethod.output[0]].wkStrength();
+        if (oldMethod != null) {
+          _ref3 = [this[oldMethod.output].state(), this[oldMethod.output].wkStrength()], oldValue = _ref3[0], oldStrength = _ref3[1];
         }
         wkStrengthCorrect = false;
         while (!wkStrengthCorrect) {
           wkStrengthCorrect = true;
           minStr = Infinity;
           minMethod = void 0;
-          _ref3 = cn.methods;
-          for (_i = 0, _len = _ref3.length; _i < _len; _i++) {
-            method = _ref3[_i];
-            if (this[method.output[0]].wkStrength() < minStr) {
-              minStr = this[method.output[0]].wkStrength();
+          _ref4 = cn.methods;
+          for (_i = 0, _len = _ref4.length; _i < _len; _i++) {
+            method = _ref4[_i];
+            if (this[method.output].wkStrength() < minStr) {
+              minStr = this[method.output].wkStrength();
               minMethod = method;
             }
           }
-          if (minStr === oldStr) {
+          if (minStr === oldStrength) {
             minMethod = oldMethod;
           }
-          if (minMethod !== oldMethod && oldMethod !== void 0 && oldMethod.output[0] !== preObs) {
-            if (this[oldMethod.output[0]].wkStrength() !== this[oldMethod.output[0]].priority()) {
+          if (minMethod !== oldMethod && oldMethod !== void 0 && oldMethod.output !== preObs) {
+            if (this[oldMethod.output].wkStrength() !== this[oldMethod.output].priority()) {
               wkStrengthCorrect = false;
             }
-            this[oldMethod.output[0]].wkStrength(this[oldMethod.output[0]].priority());
+            this[oldMethod.output].wkStrength(this[oldMethod.output].priority());
           }
         }
-        newStr = Infinity;
-        _ref4 = cn.methods;
-        for (_j = 0, _len2 = _ref4.length; _j < _len2; _j++) {
-          method = _ref4[_j];
-          if (method === minMethod) {
-            continue;
+        newStrength = _.min((function() {
+          var _j, _len2, _ref5, _results;
+          _ref5 = cn.methods;
+          _results = [];
+          for (_j = 0, _len2 = _ref5.length; _j < _len2; _j++) {
+            m = _ref5[_j];
+            if (m !== minMethod) {
+              _results.push(this[m.output].wkStrength());
+            }
           }
-          if (this[method.output[0]].wkStrength() < newStr) {
-            newStr = this[method.output[0]].wkStrength();
-          }
-        }
+          return _results;
+        }).call(this));
         if (minMethod === void 0) {
           throw new Error("The graph is over constrainted.");
         } else {
           if (minMethod.condition !== void 0) {
             if (minMethod.condition.apply(this, (function() {
-              var _k, _len3, _ref5, _results;
+              var _j, _len2, _ref5, _results;
               _ref5 = minMethod.inputs;
               _results = [];
-              for (_k = 0, _len3 = _ref5.length; _k < _len3; _k++) {
-                name = _ref5[_k];
+              for (_j = 0, _len2 = _ref5.length; _j < _len2; _j++) {
+                name = _ref5[_j];
                 _results.push(ko.utils.unwrapObservable(this[name]));
               }
               return _results;
@@ -225,29 +225,29 @@ arguments),this._chain)}});j.prototype.chain=function(){this._chain=!0;return th
                 return null;
               }
               cn.currentMethod = void 0;
-              this[oldMethod.output[0]].wkStrength(this[oldMethod.output[0]].priority());
-              this.notifyObs(oldMethod.output[0], cn);
+              this[oldMethod.output].wkStrength(this[oldMethod.output].priority());
+              this.notifyObs(oldMethod.output, cn);
               return null;
             }
           }
-          this[minMethod.output[0]].state(minMethod.body.apply(this, (function() {
-            var _k, _len3, _ref5, _results;
+          this[minMethod.output].state(minMethod.body.apply(this, (function() {
+            var _j, _len2, _ref5, _results;
             _ref5 = minMethod.inputs;
             _results = [];
-            for (_k = 0, _len3 = _ref5.length; _k < _len3; _k++) {
-              name = _ref5[_k];
+            for (_j = 0, _len2 = _ref5.length; _j < _len2; _j++) {
+              name = _ref5[_j];
               _results.push(ko.utils.unwrapObservable(this[name]));
             }
             return _results;
           }).call(this)));
           if (minMethod === oldMethod) {
-            if (this[minMethod.output[0]].state() === oldValue && newStr === oldStr) {
+            if (this[minMethod.output].state() === oldValue && newStrength === oldStrength) {
               return null;
             }
           }
           cn.currentMethod = minMethod;
-          this[minMethod.output[0]].wkStrength(newStr);
-          this.notifyObs(minMethod.output[0], cn);
+          this[minMethod.output].wkStrength(newStrength);
+          this.notifyObs(minMethod.output, cn);
           return null;
         }
       };
@@ -260,7 +260,7 @@ arguments),this._chain)}});j.prototype.chain=function(){this._chain=!0;return th
         options = _ref3[name];
         _results.push((function() {
           var _i, _len, _ref4, _results2;
-          _ref4 = this[name].cnToNotify;
+          _ref4 = this[name].constraints();
           _results2 = [];
           for (_i = 0, _len = _ref4.length; _i < _len; _i++) {
             cn = _ref4[_i];
@@ -282,7 +282,7 @@ arguments),this._chain)}});j.prototype.chain=function(){this._chain=!0;return th
         if (value.errors()) {
           $(element).prepend("<div class='argure-error-message'>\n	<strong>Errors Detected:</strong>\n	<nl>\n		" + ((function() {
             var _i, _len, _ref2, _results;
-            _ref2 = viewModel.errors.get(value.observableName);
+            _ref2 = viewModel.errors.get(value.cell);
             _results = [];
             for (_i = 0, _len = _ref2.length; _i < _len; _i++) {
               msg = _ref2[_i];
@@ -375,7 +375,7 @@ arguments),this._chain)}});j.prototype.chain=function(){this._chain=!0;return th
         value = valueAccessor();
         return ko.bindingHandlers.template.update(element, (function() {
           return {
-            name: value.observableName + "Template",
+            name: value.cell + "Template",
             foreach: value,
             templateOptions: {
               parentCollection: value,
@@ -446,9 +446,8 @@ arguments),this._chain)}});j.prototype.chain=function(){this._chain=!0;return th
     return Method;
   })();
   Constraint = (function() {
-    function Constraint(formulas, id) {
+    function Constraint(formulas) {
       this.methods = [];
-      this.id = id;
       this.currentMethod = void 0;
       formulas.call(this, this);
     }
@@ -458,7 +457,7 @@ arguments),this._chain)}});j.prototype.chain=function(){this._chain=!0;return th
         ast = CoffeeScript.nodes(args_or_code);
         assignment = ast.unwrap();
         if (assignment.constructor.name === "Assign") {
-          output = extract_operands(assignment.variable);
+          output = extract_operands(assignment.variable)[0];
           inputs = extract_operands(assignment.value);
           eval("body = function(" + (inputs.join(',')) + ") { return " + (assignment.value.compile()) + "; }");
           return this.methods.push(new Method(inputs, output, body, condition));
@@ -554,8 +553,10 @@ arguments),this._chain)}});j.prototype.chain=function(){this._chain=!0;return th
         if (this[name]) {
           continue;
         }
-        this[name] = this.constructor.build_observable_callback.call(this, name, ko.observable, options.initial);
-        true;
+        observable = this.constructor.build_observable_callback.call(this, name, ko.observable, options.initial);
+        observable.errors = false;
+        this[name] = observable;
+        null;
       }
       _ref5 = (_ref4 = this.constructor.collections) != null ? _ref4 : {};
       for (name in _ref5) {
@@ -564,6 +565,7 @@ arguments),this._chain)}});j.prototype.chain=function(){this._chain=!0;return th
           continue;
         }
         observable = this.constructor.build_observable_callback.call(this, name, ko.observableArray, options.initial);
+        observable.errors = false;
         _ref6 = ["pop", "push", "reverse", "shift", "sort", "splice", "unshift", "slice", "remove", "removeAll", "destroy", "destroyAll", "indexOf"];
         _fn = function(observable, method) {
           return observable[method] = function() {
@@ -576,7 +578,7 @@ arguments),this._chain)}});j.prototype.chain=function(){this._chain=!0;return th
           true;
         }
         this[name] = observable;
-        true;
+        null;
       }
       this._methods = [];
       _ref8 = (_ref7 = this.constructor.relations) != null ? _ref7 : [];

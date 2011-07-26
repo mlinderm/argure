@@ -10,9 +10,8 @@ apply_knockout_solver = ->
 				state(value)
 				return null
 			owner: @
-		argure_observable.observableName = name
+		argure_observable.cell = name
 		argure_observable.state = state
-		argure_observable.errors = false  # Default is no errors
 		return argure_observable
 	
 	@build_constraint_callback ?= (constraint) ->
@@ -32,70 +31,65 @@ apply_deltaBlue_solver = ->
 		state    = observable_kind initial_value
 		priority = ko.observable @priority(false)
 		wkStrength = 0
-		cnToNotify = []
-		argure_observable = ko.dependentObservable
+		_constraints = []
+		observable = ko.dependentObservable
 			read : -> state()
 			write: (value) ->
 				priority(@priority())
 				wkStrength = @priority(false)
 				state(value)
-				for cn in cnToNotify
-					@notifyCn(cn,name)
+				@notifyCn(cn, name) for cn in _constraints
 				return null
 			owner: @
-		argure_observable.observableName = name
-		argure_observable.state = state
-		argure_observable.errors = false  # Default is no errors
-		argure_observable.priority = priority
-		argure_observable.wkStrength = (value) ->
+		observable.cell = name
+		observable.state = state
+		observable.priority = priority
+		observable.wkStrength = (value) ->
 			wkStrength = value if value?
 			wkStrength
-		argure_observable.cnToNotify = cnToNotify
-		return argure_observable
+		observable.constraints = (value) ->
+			_constraints = _.union(_constraints, value) if value?
+			_constraints
+
+		return observable
 	
-	@build_constraint_callback ?= (constraint)->
-		for method in constraint.methods
-			do (method) =>
-				for input in method.inputs
-					if @[input].cnToNotify != undefined and @[input].cnToNotify.indexOf(constraint)==-1
-						@[input].cnToNotify.push(constraint)
-					if @[method.output].cnToNotify != undefined and @[method.output].cnToNotify.indexOf(constraint)==-1
-						@[method.output].cnToNotify.push(constraint)
+	@build_constraint_callback ?= (c)->
+		for method in c.methods
+			@[method.output].constraints?(c) 
+			@[i].constraints?(c) for i in method.inputs
+		null
 
 	@_delayed ->
-		@notifyObs = (obs,preCn) ->
-			for cn in @[obs].cnToNotify
-				if cn != preCn
-					@notifyCn(cn,obs)
+		@notifyObs = (obs, preCn) ->
+			@notifyCn(cn, obs) for cn in @[obs].constraints() when cn != preCn
+			null
 
-		@notifyCn = (cn,preObs) ->
+		# Enforce
+		@notifyCn = (cn, preObs) ->
+			# Selected Method
 			oldMethod = cn.currentMethod
-			if(oldMethod!=undefined)
-				oldValue = @[oldMethod.output[0]].state()
-				oldStr = @[oldMethod.output[0]].wkStrength()
+			[oldValue, oldStrength] = [@[oldMethod.output].state(), @[oldMethod.output].wkStrength()] if oldMethod?
 			wkStrengthCorrect = false
 			while (!wkStrengthCorrect)
 				wkStrengthCorrect = true
 				minStr = Infinity
 				minMethod = undefined
 				for method in cn.methods
-					if @[method.output[0]].wkStrength() < minStr
-						minStr = @[method.output[0]].wkStrength()
+					if @[method.output].wkStrength() < minStr
+						minStr = @[method.output].wkStrength()
 						minMethod = method
-				if minStr == oldStr
+				if minStr == oldStrength
 					minMethod = oldMethod # Try to keep the old one if possible
-				if minMethod != oldMethod and oldMethod != undefined and oldMethod.output[0] != preObs
-					wkStrengthCorrect = false if @[oldMethod.output[0]].wkStrength() != @[oldMethod.output[0]].priority()
-					@[oldMethod.output[0]].wkStrength(@[oldMethod.output[0]].priority()) # The original output[0] is free
+				if minMethod != oldMethod and oldMethod != undefined and oldMethod.output != preObs
+					wkStrengthCorrect = false if @[oldMethod.output].wkStrength() != @[oldMethod.output].priority()
+					@[oldMethod.output].wkStrength(@[oldMethod.output].priority()) # The original output is free
 																						  # Its stay constraint is redirected,	
 									 											          # And its walk about strength should be equal to its priority
-			newStr = Infinity
-			for method in cn.methods
-				if method == minMethod
-					continue
-				if @[method.output[0]].wkStrength() < newStr
-					newStr = @[method.output[0]].wkStrength()
-
+			
+			
+			# Walkabout strength is the weakest of all potential outputs
+			newStrength = _.min (@[m.output].wkStrength() for m in cn.methods when m != minMethod)
+			
 			if minMethod == undefined
 				throw new Error("The graph is over constrainted.")
 			else
@@ -104,23 +98,23 @@ apply_deltaBlue_solver = ->
 						if cn.currentMethod ==undefined
 							return null
 						cn.currentMethod = undefined
-						@[oldMethod.output[0]].wkStrength(@[oldMethod.output[0]].priority())
-						@notifyObs(oldMethod.output[0], cn)
+						@[oldMethod.output].wkStrength(@[oldMethod.output].priority())
+						@notifyObs(oldMethod.output, cn)
 						return null
-				@[minMethod.output[0]].state minMethod.body.apply(this, (ko.utils.unwrapObservable(@[name]) for name in minMethod.inputs)) # Execute Method
+				@[minMethod.output].state minMethod.body.apply(this, (ko.utils.unwrapObservable(@[name]) for name in minMethod.inputs)) # Execute Method
 #				cnGraph.detectCycle()
 				if(minMethod == oldMethod)
-					if(@[minMethod.output[0]].state() == oldValue and newStr == oldStr)
+					if(@[minMethod.output].state() == oldValue and newStrength == oldStrength)
 						return null
 				cn.currentMethod = minMethod
-				@[minMethod.output[0]].wkStrength(newStr)
-				@notifyObs(minMethod.output[0],cn)
+				@[minMethod.output].wkStrength(newStrength)
+				@notifyObs(minMethod.output,cn)
 				return null
 
 
 	@_delayed ->
 		for name, options of @.constructor.observables
-			for cn in @[name].cnToNotify
+			for cn in @[name].constraints()
 				@notifyCn(cn)
 
 
@@ -137,7 +131,7 @@ apply_validate_extensions = ->
 				<div class='argure-error-message'>
 					<strong>Errors Detected:</strong>
 					<nl>
-						#{"<li>#{msg}</li>" for msg in viewModel.errors.get(value.observableName)}
+						#{"<li>#{msg}</li>" for msg in viewModel.errors.get(value.cell)}
 					</nl>
 				</div>
 				"""
@@ -162,8 +156,8 @@ apply_set_extensions = ->
 				slct: @[name+'_slct']
 			null
 
-		#The default for knockout is that the "selections" do not change
-		#when the options do, e.g., "deleting" an option does not delete
+		# The default for knockout is that the "selections" do not change
+		# when the options do, e.g., "deleting" an option does not delete
 		# the corresponding option from the selected options. This 
 		# subscription fixes that by propagrating removals...
 		@_delayed ->
@@ -190,7 +184,7 @@ apply_set_extensions = ->
 		update: (element, valueAccessor, allBindingsAccessor, viewModel) ->
 			value = valueAccessor()
 			ko.bindingHandlers.template.update element, (->
-				name: value.observableName + "Template"
+				name: value.cell + "Template"
 				foreach: value
 				templateOptions: { parentCollection: value, uqId: _.uniqueId() }
 			), allBindingsAccessor, viewModel
