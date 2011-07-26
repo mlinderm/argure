@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<title> Argure Demo: Image Resizing </title>
+		<script src="../../spec/vendor/jquery-1.6.js"></script>
+		<script src="../../spec/vendor/jquery.tmpl.js"></script>
+		<script src="../../spec/vendor/knockout-1.2.1.debug.js"></script>
+		<script src="../../public/javascripts/argure.js"></script>
+	</head>
+	<body>
+		<h1>
+		Camera Demo	
+		</h1>
+		<p id="cameraArgure">
+			<form id="camera">
+				<p>Focus X pos: <span data-bind="text: focusX"></span></p>
+				<p>Focus Y pos: <span data-bind="text: focusY"></span></p>
+				<p>Right boundary: <span data-bind="text: maxX"></span></p>
+				<p>Left boundary: <span data-bind="text: minX"></span></p>
+				<p>Top boundary: <span data-bind="text: maxY"></span></p>
+				<p>Bottom boundary: <span data-bind="text: minY"></span></p>
+				<p>Ratio: <span data-bind="text: ratio">%</span></p>
+				<button data-bind="click: zoomInClick">Room In</button>
+				<button data-bind="click: zoomOutClick">Room Out</button>
+				<br/><br/>
+				<button data-bind="click: moveRightClick">Move right</button>
+				<button data-bind="click: moveLeftClick">Move left</button>
+				<button data-bind="click: moveUpClick">Move up</button>
+				<button data-bind="click: moveDownClick">Move down</button>
+				<br/><br/>
+				
+			</form>
+
+			<script type="text/coffeescript" charset="utf-8">
+				class Camera extends Argure.Model
+					constructor: (@width, @height) ->
+						super()
+					zoomInClick : ->
+						if @ratio()>0 then @ratio(@ratio()-1)
+					zoomOutClick : ->
+						if @ratio()<100 then @ratio(@ratio()+1)
+					moveRightClick : ->
+						if @focusX() <= @width-@ratio()*0.1 then @focusX(@focusX()+@ratio()*0.1)
+					moveLeftClick : ->
+						if(@focusX() >= @ratio()*0.1) then @focusX(@focusX()-@ratio()*0.1)
+					moveUpClick : ->
+						if(@focusY() <= @height-@ratio()*0.1) then @focusY(@focusY()+@ratio()*0.1)
+					moveDownClick : ->
+						if(focusY() >= @ratio()*0.1) then @focusY(@focusY()-@ratio()*0.1)
+					
+					@observe 'focusX', initial: 320
+					@observe 'focusY', initial: 240
+					@observe 'maxX'
+					@observe 'minX'
+					@observe 'maxY'
+					@observe 'minY'
+					@observe 'ratio', initial: 100
+				this.camera = new Camera(640,480)
+				ko.applyBindings(this.camera)
+			</script>
+							
+		</p>
+	</body>
+</html>
