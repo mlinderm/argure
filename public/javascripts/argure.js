@@ -35,25 +35,46 @@ b.template=function(a,c){var d=b.templateSettings;d="var __p=[],print=function()
 var j=function(a){this._wrapped=a};b.prototype=j.prototype;var r=function(a,c){return c?b(a).chain():a},H=function(a,c){j.prototype[a]=function(){var a=f.call(arguments);D.call(a,this._wrapped);return r(c.apply(b,a),this._chain)}};b.mixin(b);h(["pop","push","reverse","shift","sort","splice","unshift"],function(a){var b=i[a];j.prototype[a]=function(){b.apply(this._wrapped,arguments);return r(this._wrapped,this._chain)}});h(["concat","join","slice"],function(a){var b=i[a];j.prototype[a]=function(){return r(b.apply(this._wrapped,
 arguments),this._chain)}});j.prototype.chain=function(){this._chain=!0;return this};j.prototype.value=function(){return this._wrapped}})();
 (function() {
-  var add_deltaBlue_observable, apply_deltaBlue_solver, apply_knockout_solver, apply_set_extensions, apply_validate_extensions, _obsCounter;
+  var apply_deltaBlue_solver, apply_knockout_solver, apply_set_extensions, apply_validate_extensions;
   var __bind = function(fn, me){ return function(){ return fn.apply(me, arguments); }; };
   apply_knockout_solver = function() {
-    var _ref;
-    return (_ref = this.build_constraint_callback) != null ? _ref : this.build_constraint_callback = function(constraint) {
-      var method, _i, _len, _ref2, _results;
-      _ref2 = constraint.methods;
+    var _ref, _ref2;
+        if ((_ref = this.build_observable_callback) != null) {
+      _ref;
+    } else {
+      this.build_observable_callback = function(name, observable_kind, initial_value) {
+        var argure_observable, state;
+        state = observable_kind(initial_value);
+        argure_observable = ko.dependentObservable({
+          read: function() {
+            return state();
+          },
+          write: function(value) {
+            state(value);
+            return null;
+          },
+          owner: this
+        });
+        argure_observable.cell = name;
+        argure_observable.state = state;
+        return argure_observable;
+      };
+    };
+    return (_ref2 = this.build_constraint_callback) != null ? _ref2 : this.build_constraint_callback = function(constraint) {
+      var method, _i, _len, _ref3, _results;
+      _ref3 = constraint.methods;
       _results = [];
-      for (_i = 0, _len = _ref2.length; _i < _len; _i++) {
-        method = _ref2[_i];
+      for (_i = 0, _len = _ref3.length; _i < _len; _i++) {
+        method = _ref3[_i];
         _results.push(__bind(function(method) {
           return ko.dependentObservable(function() {
             var name;
             this[method.output].state(method.body.apply(this, (function() {
-              var _j, _len2, _ref3, _results2;
-              _ref3 = method.inputs;
+              var _j, _len2, _ref4, _results2;
+              _ref4 = method.inputs;
               _results2 = [];
-              for (_j = 0, _len2 = _ref3.length; _j < _len2; _j++) {
-                name = _ref3[_j];
+              for (_j = 0, _len2 = _ref4.length; _j < _len2; _j++) {
+                name = _ref4[_j];
                 _results2.push(ko.utils.unwrapObservable(this[name]));
               }
               return _results2;
@@ -66,47 +87,211 @@ arguments),this._chain)}});j.prototype.chain=function(){this._chain=!0;return th
     };
   };
   apply_deltaBlue_solver = function() {
-    var _ref;
-    return (_ref = this.build_constraint_callback) != null ? _ref : this.build_constraint_callback = function(constraint) {
-      var method, _i, _len, _ref2, _results;
-      _ref2 = constraint.methods;
-      _results = [];
-      for (_i = 0, _len = _ref2.length; _i < _len; _i++) {
-        method = _ref2[_i];
-        _results.push(__bind(function(method) {
-          var input, _j, _len2, _ref3;
-          _ref3 = method.inputs;
-          for (_j = 0, _len2 = _ref3.length; _j < _len2; _j++) {
-            input = _ref3[_j];
-            if (this[input].cnToNotify !== void 0 && this[input].cnToNotify.indexOf(constraint) === -1) {
-              this[input].cnToNotify.push(constraint);
+    var _ref, _ref2;
+        if ((_ref = this.build_observable_callback) != null) {
+      _ref;
+    } else {
+      this.build_observable_callback = function(name, observable_kind, initial_value) {
+        var observable, priority, state, wkStrength, _constraints;
+        state = observable_kind(initial_value);
+        priority = ko.observable(this.priority(false));
+        wkStrength = 0;
+        _constraints = [];
+        observable = ko.dependentObservable({
+          read: function() {
+            return state();
+          },
+          write: function(value) {
+            var cn, _i, _len;
+            priority(this.priority());
+            wkStrength = this.priority(false);
+            state(value);
+            for (_i = 0, _len = _constraints.length; _i < _len; _i++) {
+              cn = _constraints[_i];
+              this.notifyCn(cn, name);
+            }
+            return null;
+          },
+          owner: this
+        });
+        observable.cell = name;
+        observable.state = state;
+        observable.priority = priority;
+        observable.wkStrength = function(value) {
+          if (value != null) {
+            wkStrength = value;
+          }
+          return wkStrength;
+        };
+        observable.constraints = function(value) {
+          if (value != null) {
+            _constraints = _.union(_constraints, value);
+          }
+          return _constraints;
+        };
+        return observable;
+      };
+    };
+        if ((_ref2 = this.build_constraint_callback) != null) {
+      _ref2;
+    } else {
+      this.build_constraint_callback = function(c) {
+        var i, method, _base, _base2, _i, _j, _len, _len2, _ref3, _ref4;
+        _ref3 = c.methods;
+        for (_i = 0, _len = _ref3.length; _i < _len; _i++) {
+          method = _ref3[_i];
+          if (typeof (_base = this[method.output]).constraints === "function") {
+            _base.constraints(c);
+          }
+          _ref4 = method.inputs;
+          for (_j = 0, _len2 = _ref4.length; _j < _len2; _j++) {
+            i = _ref4[_j];
+            if (typeof (_base2 = this[i]).constraints === "function") {
+              _base2.constraints(c);
             }
           }
-          if (this[method.output].cnToNotify !== void 0 && this[method.output].cnToNotify.indexOf(constraint) === -1) {
-            return this[method.output].cnToNotify.push(constraint);
+        }
+        return null;
+      };
+    };
+    this._delayed(function() {
+      this.notifyObs = function(obs, preCn) {
+        var cn, _i, _len, _ref3;
+        _ref3 = this[obs].constraints();
+        for (_i = 0, _len = _ref3.length; _i < _len; _i++) {
+          cn = _ref3[_i];
+          if (cn !== preCn) {
+            this.notifyCn(cn, obs);
           }
-        }, this)(method));
+        }
+        return null;
+      };
+      return this.notifyCn = function(cn, preObs) {
+        var m, method, minMethod, minStr, name, newStrength, oldMethod, oldStrength, oldValue, wkStrengthCorrect, _i, _len, _ref3, _ref4;
+        oldMethod = cn.currentMethod;
+        if (oldMethod != null) {
+          _ref3 = [this[oldMethod.output].state(), this[oldMethod.output].wkStrength()], oldValue = _ref3[0], oldStrength = _ref3[1];
+        }
+        wkStrengthCorrect = false;
+        while (!wkStrengthCorrect) {
+          wkStrengthCorrect = true;
+          minStr = Infinity;
+          minMethod = void 0;
+          _ref4 = cn.methods;
+          for (_i = 0, _len = _ref4.length; _i < _len; _i++) {
+            method = _ref4[_i];
+            if (this[method.output].wkStrength() < minStr) {
+              minStr = this[method.output].wkStrength();
+              minMethod = method;
+            }
+          }
+          if (minStr === oldStrength) {
+            minMethod = oldMethod;
+          }
+          if (minMethod !== oldMethod && oldMethod !== void 0 && oldMethod.output !== preObs) {
+            if (this[oldMethod.output].wkStrength() !== this[oldMethod.output].priority()) {
+              wkStrengthCorrect = false;
+            }
+            this[oldMethod.output].wkStrength(this[oldMethod.output].priority());
+          }
+        }
+        newStrength = _.min((function() {
+          var _j, _len2, _ref5, _results;
+          _ref5 = cn.methods;
+          _results = [];
+          for (_j = 0, _len2 = _ref5.length; _j < _len2; _j++) {
+            m = _ref5[_j];
+            if (m !== minMethod) {
+              _results.push(this[m.output].wkStrength());
+            }
+          }
+          return _results;
+        }).call(this));
+        if (minMethod === void 0) {
+          throw new Error("The graph is over constrainted.");
+        } else {
+          if (minMethod.condition !== void 0) {
+            if (minMethod.condition.apply(this, (function() {
+              var _j, _len2, _ref5, _results;
+              _ref5 = minMethod.inputs;
+              _results = [];
+              for (_j = 0, _len2 = _ref5.length; _j < _len2; _j++) {
+                name = _ref5[_j];
+                _results.push(ko.utils.unwrapObservable(this[name]));
+              }
+              return _results;
+            }).call(this)) !== true) {
+              if (cn.currentMethod === void 0) {
+                return null;
+              }
+              cn.currentMethod = void 0;
+              this[oldMethod.output].wkStrength(this[oldMethod.output].priority());
+              this.notifyObs(oldMethod.output, cn);
+              return null;
+            }
+          }
+          this[minMethod.output].state(minMethod.body.apply(this, (function() {
+            var _j, _len2, _ref5, _results;
+            _ref5 = minMethod.inputs;
+            _results = [];
+            for (_j = 0, _len2 = _ref5.length; _j < _len2; _j++) {
+              name = _ref5[_j];
+              _results.push(ko.utils.unwrapObservable(this[name]));
+            }
+            return _results;
+          }).call(this)));
+          if (minMethod === oldMethod) {
+            if (this[minMethod.output].state() === oldValue && newStrength === oldStrength) {
+              return null;
+            }
+          }
+          cn.currentMethod = minMethod;
+          this[minMethod.output].wkStrength(newStrength);
+          this.notifyObs(minMethod.output, cn);
+          return null;
+        }
+      };
+    });
+    return this._delayed(function() {
+      var cn, name, options, _ref3, _results;
+      _ref3 = this.constructor.observables;
+      _results = [];
+      for (name in _ref3) {
+        options = _ref3[name];
+        _results.push((function() {
+          var _i, _len, _ref4, _results2;
+          _ref4 = this[name].constraints();
+          _results2 = [];
+          for (_i = 0, _len = _ref4.length; _i < _len; _i++) {
+            cn = _ref4[_i];
+            _results2.push(this.notifyCn(cn));
+          }
+          return _results2;
+        }).call(this));
       }
       return _results;
-    };
-  };
-  _obsCounter = 0;
-  add_deltaBlue_observable = function() {
-    var _ref;
-    return (_ref = this.build_observable_callback) != null ? _ref : this.build_observable_callback = function() {
-      this.id = _obsCounter++;
-      this.cnToNotify = [];
-      this.wkStrength = 0;
-      return null;
-    };
+    });
   };
   apply_validate_extensions = function() {
     var _base, _ref;
     return (_ref = (_base = ko.bindingHandlers).validate) != null ? _ref : _base.validate = {
       update: function(element, valueAccessor, allBindingsAccessor, viewModel) {
+        var msg, value;
+        value = valueAccessor();
+        $(element).children('.argure-error-message').remove();
+        if (value.errors()) {
+          $(element).prepend("<div class='argure-error-message'>\n	<strong>Errors Detected:</strong>\n	<nl>\n		" + ((function() {
+            var _i, _len, _ref2, _results;
+            _ref2 = viewModel.errors.get(value.cell);
+            _results = [];
+            for (_i = 0, _len = _ref2.length; _i < _len; _i++) {
+              msg = _ref2[_i];
+              _results.push("<li>" + msg + "</li>");
+            }
+            return _results;
+          })()) + "\n	</nl>\n</div>");
+        }
         return ko.bindingHandlers.css.update(element, (function() {
-          var value;
-          value = valueAccessor();
           return {
             "ui-state-error": value.errors
           };
@@ -190,10 +375,11 @@ arguments),this._chain)}});j.prototype.chain=function(){this._chain=!0;return th
         value = valueAccessor();
         return ko.bindingHandlers.template.update(element, (function() {
           return {
-            name: value.observableName + "Template",
+            name: value.cell + "Template",
             foreach: value,
             templateOptions: {
-              parentCollection: value
+              parentCollection: value,
+              uqId: _.uniqueId()
             }
           };
         }), allBindingsAccessor, viewModel);
@@ -202,8 +388,7 @@ arguments),this._chain)}});j.prototype.chain=function(){this._chain=!0;return th
   };
   namespace('Argure.Extensions', function(exports) {
     exports.Knockout = apply_knockout_solver;
-    exports.DeltaBlueSolver = apply_deltaBlue_solver;
-    exports.DeltaBlueObservable = add_deltaBlue_observable;
+    exports.DeltaBlue = apply_deltaBlue_solver;
     exports.Set = apply_set_extensions;
     return exports.Validate = apply_validate_extensions;
   });
@@ -261,9 +446,8 @@ arguments),this._chain)}});j.prototype.chain=function(){this._chain=!0;return th
     return Method;
   })();
   Constraint = (function() {
-    function Constraint(formulas, id) {
+    function Constraint(formulas) {
       this.methods = [];
-      this.id = id;
       this.currentMethod = void 0;
       formulas.call(this, this);
     }
@@ -273,7 +457,7 @@ arguments),this._chain)}});j.prototype.chain=function(){this._chain=!0;return th
         ast = CoffeeScript.nodes(args_or_code);
         assignment = ast.unwrap();
         if (assignment.constructor.name === "Assign") {
-          output = extract_operands(assignment.variable);
+          output = extract_operands(assignment.variable)[0];
           inputs = extract_operands(assignment.value);
           eval("body = function(" + (inputs.join(',')) + ") { return " + (assignment.value.compile()) + "; }");
           return this.methods.push(new Method(inputs, output, body, condition));
@@ -305,6 +489,9 @@ arguments),this._chain)}});j.prototype.chain=function(){this._chain=!0;return th
     function Errors() {
       var errors;
       errors = {};
+      this.empty = function() {
+        return this.size() === 0;
+      };
       this.size = function() {
         var k;
         return _.reduce((function() {
@@ -320,6 +507,20 @@ arguments),this._chain)}});j.prototype.chain=function(){this._chain=!0;return th
           return m + k;
         }), 0);
       };
+      this.clear = function(name) {
+        if (name == null) {
+          name = void 0;
+        }
+        if (name != null) {
+          delete errors[name];
+        } else {
+          errors = {};
+        }
+        return this;
+      };
+      this.get = function(name) {
+        return errors[name];
+      };
       this.add = function(name, message) {
         var _ref;
         ((_ref = errors[name]) != null ? _ref : errors[name] = []).push(message);
@@ -329,211 +530,89 @@ arguments),this._chain)}});j.prototype.chain=function(){this._chain=!0;return th
     return Errors;
   })();
   Model = (function() {
-    function Model() {
-      var build_observable, con, constraint, fn, method, name, observable, options, validators, _cnCounter, _fn, _fn2, _fn3, _i, _j, _k, _len, _len2, _len3, _priCounter, _ref, _ref10, _ref11, _ref12, _ref13, _ref2, _ref3, _ref4, _ref5, _ref6, _ref7, _ref8, _ref9;
-      this.notifyObs = function(obs, preCn) {
-        var cn, _i, _len, _ref, _results;
-        _ref = this[obs].cnToNotify;
-        _results = [];
-        for (_i = 0, _len = _ref.length; _i < _len; _i++) {
-          cn = _ref[_i];
-          _results.push(cn !== preCn ? this.notifyCn(cn, obs) : void 0);
-        }
-        return _results;
-      };
-      this.notifyCn = function(cn, preObs) {
-        var method, minMethod, minStr, name, newStr, oldMethod, oldStr, oldValue, wkStrengthCorrect, _i, _j, _len, _len2, _ref, _ref2;
-        oldMethod = cn.currentMethod;
-        if (oldMethod !== void 0) {
-          oldValue = this[oldMethod.output[0]].state();
-          oldStr = this[oldMethod.output[0]].wkStrength;
-        }
-        wkStrengthCorrect = false;
-        while (!wkStrengthCorrect) {
-          wkStrengthCorrect = true;
-          minStr = Infinity;
-          minMethod = void 0;
-          _ref = cn.methods;
-          for (_i = 0, _len = _ref.length; _i < _len; _i++) {
-            method = _ref[_i];
-            if (this[method.output[0]].wkStrength < minStr) {
-              minStr = this[method.output[0]].wkStrength;
-              minMethod = method;
-            }
-          }
-          if (minStr === oldStr) {
-            minMethod = oldMethod;
-          }
-          if (minMethod !== oldMethod && oldMethod !== void 0 && oldMethod.output[0] !== preObs) {
-            if (this[oldMethod.output[0]].wkStrength !== this[oldMethod.output[0]].priority()) {
-              wkStrengthCorrect = false;
-            }
-            this[oldMethod.output[0]].wkStrength = this[oldMethod.output[0]].priority();
-          }
-        }
-        newStr = Infinity;
-        _ref2 = cn.methods;
-        for (_j = 0, _len2 = _ref2.length; _j < _len2; _j++) {
-          method = _ref2[_j];
-          if (method === minMethod) {
-            continue;
-          }
-          if (this[method.output[0]].wkStrength < newStr) {
-            newStr = this[method.output[0]].wkStrength;
-          }
-        }
-        if (minMethod === void 0) {
-          throw new Error("The graph is over constrainted.");
-        } else {
-          if (minMethod.condition !== void 0) {
-            if (minMethod.condition.apply(this, (function() {
-              var _k, _len3, _ref3, _results;
-              _ref3 = minMethod.inputs;
-              _results = [];
-              for (_k = 0, _len3 = _ref3.length; _k < _len3; _k++) {
-                name = _ref3[_k];
-                _results.push(ko.utils.unwrapObservable(this[name]));
-              }
-              return _results;
-            }).call(this)) !== true) {
-              if (cn.currentMethod === void 0) {
-                return null;
-              }
-              cn.currentMethod = void 0;
-              this[oldMethod.output[0]].wkStrength = this[oldMethod.output[0]].priority();
-              this.notifyObs(oldMethod.output[0], cn);
-              return null;
-            }
-          }
-          this[minMethod.output[0]].state(minMethod.body.apply(this, (function() {
-            var _k, _len3, _ref3, _results;
-            _ref3 = minMethod.inputs;
-            _results = [];
-            for (_k = 0, _len3 = _ref3.length; _k < _len3; _k++) {
-              name = _ref3[_k];
-              _results.push(ko.utils.unwrapObservable(this[name]));
-            }
-            return _results;
-          }).call(this)));
-          if (minMethod === oldMethod) {
-            if (this[minMethod.output[0]].state() === oldValue && newStr === oldStr) {
-              return null;
-            }
-          }
-          cn.currentMethod = minMethod;
-          this[minMethod.output[0]].wkStrength = newStr;
-          this.notifyObs(minMethod.output[0], cn);
-          return null;
-        }
-      };
-      this.errors = new Errors();
-      _priCounter = 0;
-      _cnCounter = 0;
-      build_observable = function(name, observable_kind, initial_value) {
-        var argure_observable, priority, state, _ref;
-        state = observable_kind(initial_value);
-        priority = ko.observable(0);
-        argure_observable = ko.dependentObservable({
-          read: function() {
-            return state();
-          },
-          write: function(value) {
-            var cn, _i, _len, _ref;
-            priority(++_priCounter);
-            argure_observable.wkStrength = _priCounter;
-            state(value);
-            _ref = this[name].cnToNotify;
-            for (_i = 0, _len = _ref.length; _i < _len; _i++) {
-              cn = _ref[_i];
-              this.notifyCn(cn, name);
-            }
-            return null;
-          },
-          owner: this
-        });
-        argure_observable.observableName = name;
-        argure_observable.state = state;
-        argure_observable.priority = priority;
-        argure_observable.errors = false;
-        if ((_ref = this.constructor.build_observable_callback) != null) {
-          _ref.call(argure_observable);
-        }
-        return argure_observable;
-      };
-      _ref2 = (_ref = this.constructor.observables) != null ? _ref : {};
-      for (name in _ref2) {
-        options = _ref2[name];
-        if (this[name]) {
-          continue;
-        }
-        this[name] = build_observable.call(this, name, ko.observable, options.initial);
-        true;
+    function Model(parent) {
+      var con, constraint, fn, method, name, observable, options, validators, _fn, _fn2, _i, _j, _k, _len, _len2, _len3, _priority_counter, _ref, _ref10, _ref11, _ref12, _ref13, _ref2, _ref3, _ref4, _ref5, _ref6, _ref7, _ref8, _ref9;
+      if (parent == null) {
+        parent = void 0;
       }
-      _ref4 = (_ref3 = this.constructor.collections) != null ? _ref3 : {};
-      for (name in _ref4) {
-        options = _ref4[name];
+      _ref = (parent != null) && parent instanceof Model ? [parent.errors, parent.priority] : (_priority_counter = 0, [
+        new Errors(), (function(inc) {
+          if (inc == null) {
+            inc = true;
+          }
+          if (inc) {
+            return ++_priority_counter;
+          } else {
+            return _priority_counter;
+          }
+        })
+      ]), this.errors = _ref[0], this.priority = _ref[1];
+      _ref3 = (_ref2 = this.constructor.observables) != null ? _ref2 : {};
+      for (name in _ref3) {
+        options = _ref3[name];
         if (this[name]) {
           continue;
         }
-        observable = build_observable.call(this, name, ko.observableArray, options.initial);
-        _ref5 = ["pop", "push", "reverse", "shift", "sort", "splice", "unshift", "slice", "remove", "removeAll", "destroy", "destroyAll", "indexOf"];
+        observable = this.constructor.build_observable_callback.call(this, name, ko.observable, options.initial);
+        observable.errors = false;
+        this[name] = observable;
+        null;
+      }
+      _ref5 = (_ref4 = this.constructor.collections) != null ? _ref4 : {};
+      for (name in _ref5) {
+        options = _ref5[name];
+        if (this[name]) {
+          continue;
+        }
+        observable = this.constructor.build_observable_callback.call(this, name, ko.observableArray, options.initial);
+        observable.errors = false;
+        _ref6 = ["pop", "push", "reverse", "shift", "sort", "splice", "unshift", "slice", "remove", "removeAll", "destroy", "destroyAll", "indexOf"];
         _fn = function(observable, method) {
           return observable[method] = function() {
             return observable.state[method].apply(observable.state, arguments);
           };
         };
-        for (_i = 0, _len = _ref5.length; _i < _len; _i++) {
-          method = _ref5[_i];
+        for (_i = 0, _len = _ref6.length; _i < _len; _i++) {
+          method = _ref6[_i];
           _fn(observable, method);
           true;
         }
         this[name] = observable;
-        true;
+        null;
       }
       this._methods = [];
-      _ref7 = (_ref6 = this.constructor.relations) != null ? _ref6 : [];
-      for (_j = 0, _len2 = _ref7.length; _j < _len2; _j++) {
-        constraint = _ref7[_j];
+      _ref8 = (_ref7 = this.constructor.relations) != null ? _ref7 : [];
+      for (_j = 0, _len2 = _ref8.length; _j < _len2; _j++) {
+        constraint = _ref8[_j];
         con = new Argure.Constraint(constraint);
-        this._methods.push((_ref8 = this.constructor.build_constraint_callback) != null ? _ref8.call(this, con) : void 0);
+        this._methods.push((_ref9 = this.constructor.build_constraint_callback) != null ? _ref9.call(this, con) : void 0);
       }
-      _ref10 = (_ref9 = this.constructor.validators) != null ? _ref9 : {};
+      _ref11 = (_ref10 = this.constructor.validators) != null ? _ref10 : {};
       _fn2 = __bind(function(name, validators) {
         this[name].errors = ko.dependentObservable(function() {
           var result, v, valid, _k, _len3;
           valid = true;
+          this.errors.clear(name);
           for (_k = 0, _len3 = validators.length; _k < _len3; _k++) {
             v = validators[_k];
             result = v.call(this);
+            if (!result) {
+              this.errors.add(name, v.message);
+            }
             valid && (valid = result);
           }
           return !valid;
         }, this);
         return null;
       }, this);
-      for (name in _ref10) {
-        validators = _ref10[name];
+      for (name in _ref11) {
+        validators = _ref11[name];
         _fn2(name, validators);
       }
-      _ref12 = (_ref11 = this.constructor._delays) != null ? _ref11 : {};
-      for (_k = 0, _len3 = _ref12.length; _k < _len3; _k++) {
-        fn = _ref12[_k];
+      _ref13 = (_ref12 = this.constructor._delays) != null ? _ref12 : {};
+      for (_k = 0, _len3 = _ref13.length; _k < _len3; _k++) {
+        fn = _ref13[_k];
         fn.call(this);
-      }
-      _ref13 = this.constructor.observables;
-      _fn3 = __bind(function(name, options) {
-        var cn, _l, _len4, _ref14, _results;
-        _ref14 = this[name].cnToNotify;
-        _results = [];
-        for (_l = 0, _len4 = _ref14.length; _l < _len4; _l++) {
-          cn = _ref14[_l];
-          _results.push(this.notifyCn(cn));
-        }
-        return _results;
-      }, this);
-      for (name in _ref13) {
-        options = _ref13[name];
-        _fn3(name, options);
       }
     }
     Model._delayed = function(fn) {
@@ -545,8 +624,7 @@ arguments),this._chain)}});j.prototype.chain=function(){this._chain=!0;return th
       };
       return this._delays.push(fn);
     };
-    Argure.Extensions.DeltaBlueSolver.call(Model);
-    Argure.Extensions.DeltaBlueObservable.call(Model);
+    Argure.Extensions.DeltaBlue.call(Model);
     Argure.Extensions.Validate.call(Model);
     Model.include = function(mixin) {
       if (typeof mixin !== "function") {
@@ -601,7 +679,7 @@ arguments),this._chain)}});j.prototype.chain=function(){this._chain=!0;return th
       if (message == null) {
         message = void 0;
       }
-      validator.message = message;
+      validator.message = message != null ? message : "${name} failed validation";
       return ((_ref = (_base = ((_ref2 = this.validators) != null ? _ref2 : this.validators = {}))[name]) != null ? _ref : _base[name] = []).push(validator);
     };
     return Model;

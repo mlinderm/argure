@@ -1,10 +1,16 @@
-# Compatibility method for Object.keys (https://developer.mozilla.org/en/JavaScript/Reference/Global_Objects/Object/keys)
 class Errors
 	constructor: ->
 		errors = {}
-		
+	
+		@empty = ->
+			@size() == 0
 		@size = ->
 			_.reduce (errors[k].length for k in _.keys(errors)), ((m, k) -> m+k), 0
+		@clear = (name=undefined) ->
+			if name? then delete errors[name] else errors = {}
+			@
+		@get = (name) ->
+			errors[name]
 		@add = (name, message) ->
 			(errors[name] ?= []).push message
 			@
@@ -14,105 +20,35 @@ class Errors
 
 
 class Model
-	constructor: ->
-		@notifyObs = (obs,preCn) ->
-			for cn in @[obs].cnToNotify
-				if cn != preCn
-					@notifyCn(cn,obs)
-
-		@notifyCn = (cn,preObs) ->
-			oldMethod = cn.currentMethod
-			if(oldMethod!=undefined)
-				oldValue = @[oldMethod.output[0]].state()
-				oldStr = @[oldMethod.output[0]].wkStrength
-			wkStrengthCorrect = false
-			while (!wkStrengthCorrect)
-				wkStrengthCorrect = true
-				minStr = Infinity
-				minMethod = undefined
-				for method in cn.methods
-					if @[method.output[0]].wkStrength < minStr
-						minStr = @[method.output[0]].wkStrength
-						minMethod = method
-				if minStr == oldStr
-					minMethod = oldMethod # Try to keep the old one if possible
-				if minMethod != oldMethod and oldMethod != undefined and oldMethod.output[0] != preObs
-					wkStrengthCorrect = false if @[oldMethod.output[0]].wkStrength != @[oldMethod.output[0]].priority()
-					@[oldMethod.output[0]].wkStrength = @[oldMethod.output[0]].priority() # The original output[0] is free
-																						  # Its stay constraint is redirected,	
-									 											          # And its walk about strength should be equal to its priority
-			newStr = Infinity
-			for method in cn.methods
-				if method == minMethod
-					continue
-				if @[method.output[0]].wkStrength < newStr
-					newStr = @[method.output[0]].wkStrength
-
-			if minMethod == undefined
-				throw new Error("The graph is over constrainted.")
-			else
-				if minMethod.condition != undefined
-					if minMethod.condition.apply(this, (ko.utils.unwrapObservable(@[name]) for name in minMethod.inputs)) != true # Execute Condition
-						if cn.currentMethod ==undefined
-							return null
-						cn.currentMethod = undefined
-						@[oldMethod.output[0]].wkStrength = @[oldMethod.output[0]].priority()
-						@notifyObs(oldMethod.output[0], cn)
-						return null
-				@[minMethod.output[0]].state minMethod.body.apply(this, (ko.utils.unwrapObservable(@[name]) for name in minMethod.inputs)) # Execute Method
-#				cnGraph.detectCycle()
-				if(minMethod == oldMethod)
-					if(@[minMethod.output[0]].state() == oldValue and newStr == oldStr)
-						return null
-				cn.currentMethod = minMethod
-				@[minMethod.output[0]].wkStrength = newStr
-				@notifyObs(minMethod.output[0],cn)
-				return null
-
-
-		@errors = new Errors()
-
-
-		_priCounter=0
-		_cnCounter=0
-
-		build_observable = (name, observable_kind, initial_value) ->
-			state    = observable_kind initial_value
-			priority = ko.observable 0
-			argure_observable = ko.dependentObservable
-				read : -> state()
-				write: (value) ->
-					priority(++_priCounter)
-					argure_observable.wkStrength = _priCounter
-					state(value)
-					for cn in @[name].cnToNotify
-						@notifyCn(cn,name)
-					return null
-				owner: @
-			argure_observable.observableName = name
-			argure_observable.state = state
-			argure_observable.priority = priority
-			argure_observable.errors = false  # Default is no errors
-			@.constructor.build_observable_callback?.call argure_observable
-			return argure_observable
-
+	constructor: (parent=undefined)->
+		
+		# Inherit errors and priority from "parent" Model
+		[@errors, @priority] = if parent? && parent instanceof Model
+			[parent.errors, parent.priority]
+		else
+			_priority_counter = 0
+			[new Errors(), ((inc=true) -> if inc then ++_priority_counter else _priority_counter)]
+		
 		# Convert observables into corresponding knockout observables
 		for name, options of @.constructor.observables ? {}
 			continue if @[name]
-			@[name] = build_observable.call @, name, ko.observable, options.initial
-			true
+			observable = @.constructor.build_observable_callback.call @, name, ko.observable, options.initial
+			observable.errors = false  # Default is no errors
+			@[name] = observable
+			null
 
 		# Convert collections into corresponding knockout observable arrays
 		for name, options of @.constructor.collections ? {}
 			continue if @[name]
-			observable = build_observable.call @, name, ko.observableArray, options.initial
+			observable = @.constructor.build_observable_callback.call @, name, ko.observableArray, options.initial
+			observable.errors = false  # Default is no errors
 			for method in ["pop", "push", "reverse", "shift", "sort", "splice", "unshift", "slice", "remove", "removeAll", "destroy", "destroyAll", "indexOf"]
 				do (observable, method) ->
 					observable[method] = ->
 						observable.state[method].apply observable.state, arguments
 				true
 			@[name] = observable
-			true
+			null
 								
 		# Create dependent observables for relations (this is a crude way to do this)
 		@_methods = []
@@ -124,8 +60,10 @@ class Model
 			do (name, validators) =>
 				@[name].errors = ko.dependentObservable ->
 					valid = true
+					@.errors.clear name
 					for v in validators
-						result = v.call(@)
+						result = v.call @
+						@.errors.add name, v.message if !result
 						valid &&= result
 					return !valid  # Observable returns true if error, false otherwise
 				, @
@@ -135,17 +73,12 @@ class Model
 		# Apply delays
 		for fn in @.constructor._delays ? {}
 			fn.call(@)
-		for name, options of @.constructor.observables
-			do (name, options) =>  # Create closure around each observable's name and options
-				for cn in @[name].cnToNotify
-					@notifyCn(cn)
-
+		
 	@_delayed: (fn) ->
 		@_delays ?= []
 		@_delays.push(fn)
 
-	Argure.Extensions.DeltaBlueSolver.call @
-	Argure.Extensions.DeltaBlueObservable.call @
+	Argure.Extensions.DeltaBlue.call @
 	Argure.Extensions.Validate.call @  # Add validate extensions by default
 	@include: (mixin) ->
 		throw new Error("Mixin must be a function") if typeof mixin != "function"
@@ -167,7 +100,7 @@ class Model
 		@relations.push(methods)
 
 	@validate: (name, validator, message=undefined) ->
-		validator.message = message
+		validator.message = message ? "${name} failed validation"
 		((@validators ?= {})[name] ?= []).push(validator)
 		
 

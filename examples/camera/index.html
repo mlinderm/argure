@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 	<head>
-		<title> Argure Demo: Image Resizing </title>
+		<title> Argure Demo: Camera </title>
 		<script src="../../spec/vendor/jquery-1.6.js"></script>
 		<script src="../../spec/vendor/jquery.tmpl.js"></script>
 		<script src="../../spec/vendor/knockout-1.2.1.debug.js"></script>
@@ -15,10 +15,10 @@
 			<form id="camera">
 				<p>Focus X pos: <span data-bind="text: focusX"></span></p>
 				<p>Focus Y pos: <span data-bind="text: focusY"></span></p>
-				<p>Right boundary: <span data-bind="text: maxX"></span></p>
-				<p>Left boundary: <span data-bind="text: minX"></span></p>
-				<p>Top boundary: <span data-bind="text: maxY"></span></p>
-				<p>Bottom boundary: <span data-bind="text: minY"></span></p>
+				<p>Right boundary: <input data-bind="value: maxX"></p>
+				<p>Left boundary: <input data-bind="value: minX"></p>
+				<p>Top boundary: <input data-bind="value: maxY"></p>
+				<p>Bottom boundary: <input data-bind="value: minY"></p>
 				<p>Ratio: <span data-bind="text: ratio">%</span></p>
 				<button data-bind="click: zoomInClick">Room In</button>
 				<button data-bind="click: zoomOutClick">Room Out</button>
@@ -38,15 +38,15 @@
 					zoomInClick : ->
 						if @ratio()>0 then @ratio(@ratio()-1)
 					zoomOutClick : ->
-						if @ratio()<100 then @ratio(@ratio()+1)
+						if @ratio()<100 then @ratio(@ratio()*1+1)
 					moveRightClick : ->
-						if @focusX() <= @width-@ratio()*0.1 then @focusX(@focusX()+@ratio()*0.1)
+						if @focusX() <= @width-@ratio()*0.1 then @focusX(@focusX()*1+@ratio()*0.1)
 					moveLeftClick : ->
 						if(@focusX() >= @ratio()*0.1) then @focusX(@focusX()-@ratio()*0.1)
 					moveUpClick : ->
-						if(@focusY() <= @height-@ratio()*0.1) then @focusY(@focusY()+@ratio()*0.1)
+						if(@focusY() <= @height-@ratio()*0.1) then @focusY(@focusY()*1+@ratio()*0.1)
 					moveDownClick : ->
-						if(focusY() >= @ratio()*0.1) then @focusY(@focusY()-@ratio()*0.1)
+						if(@focusY() >= @ratio()*0.1) then @focusY(@focusY()-@ratio()*0.1)
 					
 					@observe 'focusX', initial: 320
 					@observe 'focusY', initial: 240
@@ -54,9 +54,42 @@
 					@observe 'minX'
 					@observe 'maxY'
 					@observe 'minY'
+					@observe 'centerX'
+					@observe 'centerY'
 					@observe 'ratio', initial: 100
 
-					@relate ''
+					@relate (c) ->
+						c.method maxX: ['centerX','ratio','width'], (ctr,r,w)->(ctr*1 + 0.5*r*w/100)
+						c.method centerX: ['maxX','ratio','width'], (max,r,w)->(max - 0.5*r*w/100)
+					@relate (c) ->
+						c.method minX: ['centerX','ratio','width'], (ctr,r,w)->(ctr - 0.5*r*w/100)
+						c.method centerX: ['minX','ratio','width'], (min,r,w)->(min*1 + 0.5*r*w/100)
+					@relate (c) ->
+						c.method maxY: ['centerY','ratio','height'], (ctr,r,h)->(ctr*1 + 0.5*r*h/100)
+						c.method centerY: ['maxY','ratio','height'], (max,r,h)->(max - 0.5*r*h/100)
+					@relate (c) ->
+						c.method minY: ['centerY','ratio','height'], (ctr,r,h)->(ctr - 0.5*r*h/100)
+						c.method centerY: ['minY','ratio','height'], (min,r,h)->(min*1 + 0.5*r*h/100)
+					@relate (c) ->
+						c.method focusX : ['centerX'],(ctr) -> (ctr)
+						c.method centerX : ['focusX', 'ratio', 'width'], (f,r,w)->
+							if f <= w*(1-0.5*r/100) and f >=w*(0.5*r/100)
+								return f
+							else
+								if f > w * (1-0.5*r/100)
+									return w * (1-0.5*r/100)
+								else 
+									return w * (0.5*r/100)
+					@relate (c) ->
+						c.method focusY : ['centerY'],(ctr) -> (ctr)
+						c.method centerY : ['focusY', 'ratio', 'height'], (f,r,h)->
+							if f <= h*(1-0.5*r/100) and f >=h*(0.5*r/100)
+								return f
+							else
+								if f > h * (1-0.5*r/100)
+									return h * (1-0.5*r/100)
+								else 
+									return h * (0.5*r/100)
 				this.camera = new Camera(640,480)
 				ko.applyBindings(this.camera)
 			</script>

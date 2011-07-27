@@ -25,9 +25,8 @@ class Method
 		
 
 class Constraint
-	constructor: (formulas, id) ->
+	constructor: (formulas) ->
 		@methods = []
-		@id= id
 		@currentMethod = undefined
 		formulas.call(this, this)
 	
@@ -38,7 +37,7 @@ class Constraint
 			# We are looking for Block -> Assign
 			assignment = ast.unwrap()
 			if assignment.constructor.name == "Assign"
-				output = extract_operands assignment.variable  # LHS
+				[output] = extract_operands assignment.variable  # LHS
 				inputs = extract_operands assignment.value     # RHS
 				eval "body = function(#{inputs.join ','}) { return #{assignment.value.compile()}; }"  # Convert RHS to function
 				@methods.push new Method inputs, output, body, condition
