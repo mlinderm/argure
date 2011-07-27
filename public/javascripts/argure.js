@@ -95,7 +95,7 @@ arguments),this._chain)}});j.prototype.chain=function(){this._chain=!0;return th
         var observable, priority, state, wkStrength, _constraints;
         state = observable_kind(initial_value);
         priority = ko.observable(this.priority(false));
-        wkStrength = 0;
+        wkStrength = initial_value !== void 0 ? 0 : -1;
         _constraints = [];
         observable = ko.dependentObservable({
           read: function() {

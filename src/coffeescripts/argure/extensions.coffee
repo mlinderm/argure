@@ -30,7 +30,7 @@ apply_deltaBlue_solver = ->
 	@build_observable_callback ?= (name, observable_kind, initial_value) ->
 		state    = observable_kind initial_value
 		priority = ko.observable @priority(false)
-		wkStrength = 0
+		wkStrength = if initial_value!=undefined then 0 else -1
 		_constraints = []
 		observable = ko.dependentObservable
 			read : -> state()
@@ -55,7 +55,7 @@ apply_deltaBlue_solver = ->
 	
 	@build_constraint_callback ?= (c)->
 		for method in c.methods
-			@[method.output].constraints?(c) 
+			@[method.output].constraints?(c)
 			@[i].constraints?(c) for i in method.inputs
 		null
 
