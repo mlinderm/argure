@@ -167,33 +167,28 @@ arguments),this._chain)}});j.prototype.chain=function(){this._chain=!0;return th
         return null;
       };
       return this.notifyCn = function(cn, preObs) {
-        var m, method, minMethod, minStr, name, newStrength, oldMethod, oldStrength, oldValue, wkStrengthCorrect, _i, _len, _ref3, _ref4;
+        var m, method, minMethod, minStr, name, newStrength, notifyOld, oldMethod, oldStrength, oldValue, _i, _len, _ref3, _ref4;
         oldMethod = cn.currentMethod;
         if (oldMethod != null) {
           _ref3 = [this[oldMethod.output].state(), this[oldMethod.output].wkStrength()], oldValue = _ref3[0], oldStrength = _ref3[1];
         }
-        wkStrengthCorrect = false;
-        while (!wkStrengthCorrect) {
-          wkStrengthCorrect = true;
-          minStr = Infinity;
-          minMethod = void 0;
-          _ref4 = cn.methods;
-          for (_i = 0, _len = _ref4.length; _i < _len; _i++) {
-            method = _ref4[_i];
-            if (this[method.output].wkStrength() < minStr) {
-              minStr = this[method.output].wkStrength();
-              minMethod = method;
-            }
+        notifyOld = false;
+        if (oldMethod !== void 0 && oldMethod.output !== preObs) {
+          this[oldMethod.output].wkStrength(this[oldMethod.output].priority());
+          notifyOld = true;
+        }
+        minStr = Infinity;
+        minMethod = void 0;
+        _ref4 = cn.methods;
+        for (_i = 0, _len = _ref4.length; _i < _len; _i++) {
+          method = _ref4[_i];
+          if (this[method.output].wkStrength() < minStr) {
+            minStr = this[method.output].wkStrength();
+            minMethod = method;
           }
-          if (minStr === oldStrength) {
-            minMethod = oldMethod;
-          }
-          if (minMethod !== oldMethod && oldMethod !== void 0 && oldMethod.output !== preObs) {
-            if (this[oldMethod.output].wkStrength() !== this[oldMethod.output].priority()) {
-              wkStrengthCorrect = false;
-            }
-            this[oldMethod.output].wkStrength(this[oldMethod.output].priority());
-          }
+        }
+        if (minStr === oldStrength) {
+          minMethod = oldMethod;
         }
         newStrength = _.min((function() {
           var _j, _len2, _ref5, _results;
@@ -248,6 +243,9 @@ arguments),this._chain)}});j.prototype.chain=function(){this._chain=!0;return th
           cn.currentMethod = minMethod;
           this[minMethod.output].wkStrength(newStrength);
           this.notifyObs(minMethod.output, cn);
+          if (minMethod !== oldMethod && notifyOld === true) {
+            this.notifyObs(oldMethod.output, cn);
+          }
           return null;
         }
       };

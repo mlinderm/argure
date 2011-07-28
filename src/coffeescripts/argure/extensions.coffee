@@ -69,22 +69,20 @@ apply_deltaBlue_solver = ->
 			# Selected Method
 			oldMethod = cn.currentMethod
 			[oldValue, oldStrength] = [@[oldMethod.output].state(), @[oldMethod.output].wkStrength()] if oldMethod?
-			wkStrengthCorrect = false
-			while (!wkStrengthCorrect)
-				wkStrengthCorrect = true
-				minStr = Infinity
-				minMethod = undefined
-				for method in cn.methods
-					if @[method.output].wkStrength() < minStr
-						minStr = @[method.output].wkStrength()
-						minMethod = method
-				if minStr == oldStrength
-					minMethod = oldMethod # Try to keep the old one if possible
-				if minMethod != oldMethod and oldMethod != undefined and oldMethod.output != preObs
-					wkStrengthCorrect = false if @[oldMethod.output].wkStrength() != @[oldMethod.output].priority()
-					@[oldMethod.output].wkStrength(@[oldMethod.output].priority()) # The original output is free
-																						  # Its stay constraint is redirected,	
-									 											          # And its walk about strength should be equal to its priority
+			notifyOld = false
+			if oldMethod != undefined and oldMethod.output != preObs
+				@[oldMethod.output].wkStrength(@[oldMethod.output].priority()) # The original output is free
+																				# Its stay constraint is redirected,			
+																				# And its walk about strength should be equal to its priority
+				notifyOld = true
+			minStr = Infinity
+			minMethod = undefined
+			for method in cn.methods
+				if @[method.output].wkStrength() < minStr
+					minStr = @[method.output].wkStrength()
+					minMethod = method
+			if minStr == oldStrength
+				minMethod = oldMethod # Try to keep the old one if possible
 			
 			
 			# Walkabout strength is the weakest of all potential outputs
@@ -109,6 +107,8 @@ apply_deltaBlue_solver = ->
 				cn.currentMethod = minMethod
 				@[minMethod.output].wkStrength(newStrength)
 				@notifyObs(minMethod.output,cn)
+				if(minMethod != oldMethod and notifyOld == true)
+					@notifyObs(oldMethod.output,cn)
 				return null
 
 
