@@ -60,21 +60,32 @@ apply_deltaBlue_solver = ->
 		null
 
 	@_delayed ->
-		@notifyObs = (obs, preCn) ->
-			@notifyCn(cn, obs) for cn in @[obs].constraints() when cn != preCn
-			null
+		@decreaseStrength = (obs, preCn) ->
+			for cn in @[obs].constraints() when cn!= preCn
+				oldMethod = cn.currentMethod
+				[oldValue, oldStrength] = [@[oldMethod.output].state(), @[oldMethod.output].wkStrength()] if oldMethod?
+				@[oldMethod.output].wkStrength(@[oldMethod.output].priority())
+				@addConstraint(cn,obs) for cn in @[obs].constraints() when cn!=preCn
+				if(oldMethod.output!=undefined and oldStrength != @[oldMethod.output].wkStrength())
+					@decreaseStrength(oldMethod.output, cn)
+
+#		@increaseStrength = (obs, preCn) ->
+#			for cn in @[obs].constraints() when cn!= preCn
+#				oldMethod = cn.currentMethod
+#				[oldValue, oldStrength] = [@[oldMethod.output].state(), @[oldMethod.output].wkStrength()] if oldMethod?
+#				newStrength = _.min (@[m.output].wkStrength() for m in cn.methods when m != minMethod)
+#				if(oldMethod.output!=undefined and oldStrength != @[oldMethod.output].wkStrength())
+#					@increaseStrength(oldMethod.output, cn)
+#		@notifyObs = (obs, preCn) ->
+#			@addConstraint(cn, obs) for cn in @[obs].constraints() when cn != preCn
+#			null
 
 		# Enforce
-		@notifyCn = (cn, preObs) ->
+		@addConstraint= (cn, preObs) ->
 			# Selected Method
 			oldMethod = cn.currentMethod
 			[oldValue, oldStrength] = [@[oldMethod.output].state(), @[oldMethod.output].wkStrength()] if oldMethod?
-			notifyOld = false
-			if oldMethod != undefined and oldMethod.output != preObs
-				@[oldMethod.output].wkStrength(@[oldMethod.output].priority()) # The original output is free
-																				# Its stay constraint is redirected,			
-																				# And its walk about strength should be equal to its priority
-				notifyOld = true
+			
 			minStr = Infinity
 			minMethod = undefined
 			for method in cn.methods
@@ -97,7 +108,7 @@ apply_deltaBlue_solver = ->
 							return null
 						cn.currentMethod = undefined
 						@[oldMethod.output].wkStrength(@[oldMethod.output].priority())
-						@notifyObs(oldMethod.output, cn)
+						@decreaseStrength(oldMethod.output, cn)
 						return null
 				@[minMethod.output].state minMethod.body.apply(this, (ko.utils.unwrapObservable(@[name]) for name in minMethod.inputs)) # Execute Method
 #				cnGraph.detectCycle()
@@ -106,9 +117,8 @@ apply_deltaBlue_solver = ->
 						return null
 				cn.currentMethod = minMethod
 				@[minMethod.output].wkStrength(newStrength)
-				@notifyObs(minMethod.output,cn)
-				if(minMethod != oldMethod and notifyOld == true)
-					@notifyObs(oldMethod.output,cn)
+				
+				@addConstraint(nextCn, minMethod.output) for nextCn in @[minMethod.output].constraints() when nextCn != cn
 				return null
 
 

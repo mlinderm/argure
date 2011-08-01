@@ -155,27 +155,35 @@ arguments),this._chain)}});j.prototype.chain=function(){this._chain=!0;return th
       };
     };
     this._delayed(function() {
-      this.notifyObs = function(obs, preCn) {
-        var cn, _i, _len, _ref3;
+      this.decreaseStrength = function(obs, preCn) {
+        var cn, oldMethod, oldStrength, oldValue, _i, _j, _len, _len2, _ref3, _ref4, _ref5, _results;
         _ref3 = this[obs].constraints();
+        _results = [];
         for (_i = 0, _len = _ref3.length; _i < _len; _i++) {
           cn = _ref3[_i];
           if (cn !== preCn) {
-            this.notifyCn(cn, obs);
+            oldMethod = cn.currentMethod;
+            if (oldMethod != null) {
+              _ref4 = [this[oldMethod.output].state(), this[oldMethod.output].wkStrength()], oldValue = _ref4[0], oldStrength = _ref4[1];
+            }
+            this[oldMethod.output].wkStrength(this[oldMethod.output].priority());
+            _ref5 = this[obs].constraints();
+            for (_j = 0, _len2 = _ref5.length; _j < _len2; _j++) {
+              cn = _ref5[_j];
+              if (cn !== preCn) {
+                this.addConstraint(cn, obs);
+              }
+            }
+            _results.push(oldMethod.output !== void 0 && oldStrength !== this[oldMethod.output].wkStrength() ? this.decreaseStrength(oldMethod.output, cn) : void 0);
           }
         }
-        return null;
+        return _results;
       };
-      return this.notifyCn = function(cn, preObs) {
-        var m, method, minMethod, minStr, name, newStrength, notifyOld, oldMethod, oldStrength, oldValue, _i, _len, _ref3, _ref4;
+      return this.addConstraint = function(cn, preObs) {
+        var m, method, minMethod, minStr, name, newStrength, nextCn, oldMethod, oldStrength, oldValue, _i, _j, _len, _len2, _ref3, _ref4, _ref5;
         oldMethod = cn.currentMethod;
         if (oldMethod != null) {
           _ref3 = [this[oldMethod.output].state(), this[oldMethod.output].wkStrength()], oldValue = _ref3[0], oldStrength = _ref3[1];
-        }
-        notifyOld = false;
-        if (oldMethod !== void 0 && oldMethod.output !== preObs) {
-          this[oldMethod.output].wkStrength(this[oldMethod.output].priority());
-          notifyOld = true;
         }
         minStr = Infinity;
         minMethod = void 0;
@@ -221,7 +229,7 @@ arguments),this._chain)}});j.prototype.chain=function(){this._chain=!0;return th
               }
               cn.currentMethod = void 0;
               this[oldMethod.output].wkStrength(this[oldMethod.output].priority());
-              this.notifyObs(oldMethod.output, cn);
+              this.decreaseStrength(oldMethod.output, cn);
               return null;
             }
           }
@@ -242,9 +250,12 @@ arguments),this._chain)}});j.prototype.chain=function(){this._chain=!0;return th
           }
           cn.currentMethod = minMethod;
           this[minMethod.output].wkStrength(newStrength);
-          this.notifyObs(minMethod.output, cn);
-          if (minMethod !== oldMethod && notifyOld === true) {
-            this.notifyObs(oldMethod.output, cn);
+          _ref5 = this[minMethod.output].constraints();
+          for (_j = 0, _len2 = _ref5.length; _j < _len2; _j++) {
+            nextCn = _ref5[_j];
+            if (nextCn !== cn) {
+              this.addConstraint(nextCn, minMethod.output);
+            }
           }
           return null;
         }
