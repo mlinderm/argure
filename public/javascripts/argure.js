@@ -108,7 +108,7 @@ arguments),this._chain)}});j.prototype.chain=function(){this._chain=!0;return th
             state(value);
             for (_i = 0, _len = _constraints.length; _i < _len; _i++) {
               cn = _constraints[_i];
-              this.notifyCn(cn, name);
+              this.addConstraint(cn, name);
             }
             return null;
           },
@@ -259,6 +259,7 @@ arguments),this._chain)}});j.prototype.chain=function(){this._chain=!0;return th
           }
           return null;
         }
+        return null;
       };
     });
     return this._delayed(function() {
@@ -273,7 +274,7 @@ arguments),this._chain)}});j.prototype.chain=function(){this._chain=!0;return th
           _results2 = [];
           for (_i = 0, _len = _ref4.length; _i < _len; _i++) {
             cn = _ref4[_i];
-            _results2.push(this.notifyCn(cn));
+            _results2.push(this.addConstraint(cn));
           }
           return _results2;
         }).call(this));
@@ -334,7 +335,7 @@ arguments),this._chain)}});j.prototype.chain=function(){this._chain=!0;return th
         return this._delayed(function() {
           if (ko.isObservable(this[name + '_opts']) && ko.observable(this[name + '_slct'])) {
             return this[name + '_opts'].state.subscribe(__bind(function(value) {
-              var item, orphans;
+              var cn, item, orphans, _i, _len, _ref3;
               orphans = (function() {
                 var _i, _len, _ref3, _results;
                 _ref3 = this[name + '_slct'].state();
@@ -349,7 +350,11 @@ arguments),this._chain)}});j.prototype.chain=function(){this._chain=!0;return th
               }).call(this);
               if (orphans.length) {
                 this[name + '_slct'].state.removeAll(orphans);
-                this.notifyObs(name + '_slct');
+                _ref3 = this[name + '_slct'].constraints();
+                for (_i = 0, _len = _ref3.length; _i < _len; _i++) {
+                  cn = _ref3[_i];
+                  this.addConstraint(cn, name + '_slct');
+                }
               }
               return null;
             }, this));

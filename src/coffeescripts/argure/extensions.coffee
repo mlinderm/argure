@@ -38,7 +38,7 @@ apply_deltaBlue_solver = ->
 				priority(@priority())
 				wkStrength = @priority(false)
 				state(value)
-				@notifyCn(cn, name) for cn in _constraints
+				@addConstraint(cn, name) for cn in _constraints
 				return null
 			owner: @
 		observable.cell = name
@@ -121,11 +121,11 @@ apply_deltaBlue_solver = ->
 				@addConstraint(nextCn, minMethod.output) for nextCn in @[minMethod.output].constraints() when nextCn != cn
 				return null
 
-
+ 		null
 	@_delayed ->
 		for name, options of @.constructor.observables
 			for cn in @[name].constraints()
-				@notifyCn(cn)
+				@addConstraint(cn)
 
 
 #
@@ -176,7 +176,7 @@ apply_set_extensions = ->
 					orphans = (item for item in @[name+'_slct'].state() when value.indexOf(item) < 0)
 					if orphans.length
 						this[name+'_slct'].state.removeAll(orphans)
-						this.notifyObs(name+'_slct')
+						@addConstraint(cn, name+'_slct') for cn in @[name+'_slct'].constraints()
 					null
 
 		
