@@ -180,7 +180,7 @@ arguments),this._chain)}});j.prototype.chain=function(){this._chain=!0;return th
         return _results;
       };
       return this.addConstraint = function(cn, preObs) {
-        var m, method, minMethod, minStr, name, newStrength, nextCn, oldMethod, oldStrength, oldValue, _i, _j, _len, _len2, _ref3, _ref4, _ref5;
+        var input, m, method, minMethod, minStr, name, newStrength, nextCn, oldMethod, oldStrength, oldValue, _base, _i, _j, _k, _len, _len2, _len3, _ref3, _ref4, _ref5, _ref6;
         oldMethod = cn.currentMethod;
         if (oldMethod != null) {
           _ref3 = [this[oldMethod.output].state(), this[oldMethod.output].wkStrength()], oldValue = _ref3[0], oldStrength = _ref3[1];
@@ -198,12 +198,19 @@ arguments),this._chain)}});j.prototype.chain=function(){this._chain=!0;return th
         if (minStr === oldStrength) {
           minMethod = oldMethod;
         }
+        _ref5 = minMethod.inputs;
+        for (_j = 0, _len2 = _ref5.length; _j < _len2; _j++) {
+          input = _ref5[_j];
+          if (this[input] === void 0 || (typeof (_base = this[input]).wkStrength === "function" ? _base.wkStrength() : void 0) === -1) {
+            return;
+          }
+        }
         newStrength = _.min((function() {
-          var _j, _len2, _ref5, _results;
-          _ref5 = cn.methods;
+          var _k, _len3, _ref6, _results;
+          _ref6 = cn.methods;
           _results = [];
-          for (_j = 0, _len2 = _ref5.length; _j < _len2; _j++) {
-            m = _ref5[_j];
+          for (_k = 0, _len3 = _ref6.length; _k < _len3; _k++) {
+            m = _ref6[_k];
             if (m !== minMethod) {
               _results.push(this[m.output].wkStrength());
             }
@@ -215,11 +222,11 @@ arguments),this._chain)}});j.prototype.chain=function(){this._chain=!0;return th
         } else {
           if (minMethod.condition !== void 0) {
             if (minMethod.condition.apply(this, (function() {
-              var _j, _len2, _ref5, _results;
-              _ref5 = minMethod.inputs;
+              var _k, _len3, _ref6, _results;
+              _ref6 = minMethod.inputs;
               _results = [];
-              for (_j = 0, _len2 = _ref5.length; _j < _len2; _j++) {
-                name = _ref5[_j];
+              for (_k = 0, _len3 = _ref6.length; _k < _len3; _k++) {
+                name = _ref6[_k];
                 _results.push(ko.utils.unwrapObservable(this[name]));
               }
               return _results;
@@ -234,11 +241,11 @@ arguments),this._chain)}});j.prototype.chain=function(){this._chain=!0;return th
             }
           }
           this[minMethod.output].state(minMethod.body.apply(this, (function() {
-            var _j, _len2, _ref5, _results;
-            _ref5 = minMethod.inputs;
+            var _k, _len3, _ref6, _results;
+            _ref6 = minMethod.inputs;
             _results = [];
-            for (_j = 0, _len2 = _ref5.length; _j < _len2; _j++) {
-              name = _ref5[_j];
+            for (_k = 0, _len3 = _ref6.length; _k < _len3; _k++) {
+              name = _ref6[_k];
               _results.push(ko.utils.unwrapObservable(this[name]));
             }
             return _results;
@@ -250,9 +257,9 @@ arguments),this._chain)}});j.prototype.chain=function(){this._chain=!0;return th
           }
           cn.currentMethod = minMethod;
           this[minMethod.output].wkStrength(newStrength);
-          _ref5 = this[minMethod.output].constraints();
-          for (_j = 0, _len2 = _ref5.length; _j < _len2; _j++) {
-            nextCn = _ref5[_j];
+          _ref6 = this[minMethod.output].constraints();
+          for (_k = 0, _len3 = _ref6.length; _k < _len3; _k++) {
+            nextCn = _ref6[_k];
             if (nextCn !== cn) {
               this.addConstraint(nextCn, minMethod.output);
             }

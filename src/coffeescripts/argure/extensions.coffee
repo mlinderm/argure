@@ -95,7 +95,9 @@ apply_deltaBlue_solver = ->
 			if minStr == oldStrength
 				minMethod = oldMethod # Try to keep the old one if possible
 			
-			
+			for input in minMethod.inputs
+				if @[input]==undefined || @[input].wkStrength?() == -1
+					return # Uninitialized Input
 			# Walkabout strength is the weakest of all potential outputs
 			newStrength = _.min (@[m.output].wkStrength() for m in cn.methods when m != minMethod)
 			
