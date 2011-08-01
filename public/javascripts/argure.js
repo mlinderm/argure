@@ -108,7 +108,7 @@ arguments),this._chain)}});j.prototype.chain=function(){this._chain=!0;return th
             state(value);
             for (_i = 0, _len = _constraints.length; _i < _len; _i++) {
               cn = _constraints[_i];
-              this.notifyCn(cn, name);
+              this.addConstraint(cn, name);
             }
             return null;
           },
@@ -155,27 +155,35 @@ arguments),this._chain)}});j.prototype.chain=function(){this._chain=!0;return th
       };
     };
     this._delayed(function() {
-      this.notifyObs = function(obs, preCn) {
-        var cn, _i, _len, _ref3;
+      this.decreaseStrength = function(obs, preCn) {
+        var cn, oldMethod, oldStrength, oldValue, _i, _j, _len, _len2, _ref3, _ref4, _ref5, _results;
         _ref3 = this[obs].constraints();
+        _results = [];
         for (_i = 0, _len = _ref3.length; _i < _len; _i++) {
           cn = _ref3[_i];
           if (cn !== preCn) {
-            this.notifyCn(cn, obs);
+            oldMethod = cn.currentMethod;
+            if (oldMethod != null) {
+              _ref4 = [this[oldMethod.output].state(), this[oldMethod.output].wkStrength()], oldValue = _ref4[0], oldStrength = _ref4[1];
+            }
+            this[oldMethod.output].wkStrength(this[oldMethod.output].priority());
+            _ref5 = this[obs].constraints();
+            for (_j = 0, _len2 = _ref5.length; _j < _len2; _j++) {
+              cn = _ref5[_j];
+              if (cn !== preCn) {
+                this.addConstraint(cn, obs);
+              }
+            }
+            _results.push(oldMethod.output !== void 0 && oldStrength !== this[oldMethod.output].wkStrength() ? this.decreaseStrength(oldMethod.output, cn) : void 0);
           }
         }
-        return null;
+        return _results;
       };
-      return this.notifyCn = function(cn, preObs) {
-        var m, method, minMethod, minStr, name, newStrength, notifyOld, oldMethod, oldStrength, oldValue, _i, _len, _ref3, _ref4;
+      return this.addConstraint = function(cn, preObs) {
+        var input, m, method, minMethod, minStr, name, newStrength, nextCn, oldMethod, oldStrength, oldValue, _base, _i, _j, _k, _len, _len2, _len3, _ref3, _ref4, _ref5, _ref6;
         oldMethod = cn.currentMethod;
         if (oldMethod != null) {
           _ref3 = [this[oldMethod.output].state(), this[oldMethod.output].wkStrength()], oldValue = _ref3[0], oldStrength = _ref3[1];
-        }
-        notifyOld = false;
-        if (oldMethod !== void 0 && oldMethod.output !== preObs) {
-          this[oldMethod.output].wkStrength(this[oldMethod.output].priority());
-          notifyOld = true;
         }
         minStr = Infinity;
         minMethod = void 0;
@@ -190,12 +198,19 @@ arguments),this._chain)}});j.prototype.chain=function(){this._chain=!0;return th
         if (minStr === oldStrength) {
           minMethod = oldMethod;
         }
+        _ref5 = minMethod.inputs;
+        for (_j = 0, _len2 = _ref5.length; _j < _len2; _j++) {
+          input = _ref5[_j];
+          if (this[input] === void 0 || (typeof (_base = this[input]).wkStrength === "function" ? _base.wkStrength() : void 0) === -1) {
+            return;
+          }
+        }
         newStrength = _.min((function() {
-          var _j, _len2, _ref5, _results;
-          _ref5 = cn.methods;
+          var _k, _len3, _ref6, _results;
+          _ref6 = cn.methods;
           _results = [];
-          for (_j = 0, _len2 = _ref5.length; _j < _len2; _j++) {
-            m = _ref5[_j];
+          for (_k = 0, _len3 = _ref6.length; _k < _len3; _k++) {
+            m = _ref6[_k];
             if (m !== minMethod) {
               _results.push(this[m.output].wkStrength());
             }
@@ -207,11 +222,11 @@ arguments),this._chain)}});j.prototype.chain=function(){this._chain=!0;return th
         } else {
           if (minMethod.condition !== void 0) {
             if (minMethod.condition.apply(this, (function() {
-              var _j, _len2, _ref5, _results;
-              _ref5 = minMethod.inputs;
+              var _k, _len3, _ref6, _results;
+              _ref6 = minMethod.inputs;
               _results = [];
-              for (_j = 0, _len2 = _ref5.length; _j < _len2; _j++) {
-                name = _ref5[_j];
+              for (_k = 0, _len3 = _ref6.length; _k < _len3; _k++) {
+                name = _ref6[_k];
                 _results.push(ko.utils.unwrapObservable(this[name]));
               }
               return _results;
@@ -221,16 +236,16 @@ arguments),this._chain)}});j.prototype.chain=function(){this._chain=!0;return th
               }
               cn.currentMethod = void 0;
               this[oldMethod.output].wkStrength(this[oldMethod.output].priority());
-              this.notifyObs(oldMethod.output, cn);
+              this.decreaseStrength(oldMethod.output, cn);
               return null;
             }
           }
           this[minMethod.output].state(minMethod.body.apply(this, (function() {
-            var _j, _len2, _ref5, _results;
-            _ref5 = minMethod.inputs;
+            var _k, _len3, _ref6, _results;
+            _ref6 = minMethod.inputs;
             _results = [];
-            for (_j = 0, _len2 = _ref5.length; _j < _len2; _j++) {
-              name = _ref5[_j];
+            for (_k = 0, _len3 = _ref6.length; _k < _len3; _k++) {
+              name = _ref6[_k];
               _results.push(ko.utils.unwrapObservable(this[name]));
             }
             return _results;
@@ -242,12 +257,16 @@ arguments),this._chain)}});j.prototype.chain=function(){this._chain=!0;return th
           }
           cn.currentMethod = minMethod;
           this[minMethod.output].wkStrength(newStrength);
-          this.notifyObs(minMethod.output, cn);
-          if (minMethod !== oldMethod && notifyOld === true) {
-            this.notifyObs(oldMethod.output, cn);
+          _ref6 = this[minMethod.output].constraints();
+          for (_k = 0, _len3 = _ref6.length; _k < _len3; _k++) {
+            nextCn = _ref6[_k];
+            if (nextCn !== cn) {
+              this.addConstraint(nextCn, minMethod.output);
+            }
           }
           return null;
         }
+        return null;
       };
     });
     return this._delayed(function() {
@@ -262,7 +281,7 @@ arguments),this._chain)}});j.prototype.chain=function(){this._chain=!0;return th
           _results2 = [];
           for (_i = 0, _len = _ref4.length; _i < _len; _i++) {
             cn = _ref4[_i];
-            _results2.push(this.notifyCn(cn));
+            _results2.push(this.addConstraint(cn));
           }
           return _results2;
         }).call(this));
@@ -323,7 +342,7 @@ arguments),this._chain)}});j.prototype.chain=function(){this._chain=!0;return th
         return this._delayed(function() {
           if (ko.isObservable(this[name + '_opts']) && ko.observable(this[name + '_slct'])) {
             return this[name + '_opts'].state.subscribe(__bind(function(value) {
-              var item, orphans;
+              var cn, item, orphans, _i, _len, _ref3;
               orphans = (function() {
                 var _i, _len, _ref3, _results;
                 _ref3 = this[name + '_slct'].state();
@@ -338,7 +357,11 @@ arguments),this._chain)}});j.prototype.chain=function(){this._chain=!0;return th
               }).call(this);
               if (orphans.length) {
                 this[name + '_slct'].state.removeAll(orphans);
-                this.notifyObs(name + '_slct');
+                _ref3 = this[name + '_slct'].constraints();
+                for (_i = 0, _len = _ref3.length; _i < _len; _i++) {
+                  cn = _ref3[_i];
+                  this.addConstraint(cn, name + '_slct');
+                }
               }
               return null;
             }, this));
