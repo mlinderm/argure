@@ -50,12 +50,17 @@ class Model
 			@[name] = observable
 			null
 								
-		# Create dependent observables for relations (this is a crude way to do this)
+		# Create dependent observables via callback 
 		@_methods = []
 		for constraint in @.constructor.relations ? []
 			con = new Argure.Constraint constraint
 			@_methods.push @.constructor.build_constraint_callback?.call @, con
 
+		# Apply delays
+		for fn in @.constructor._delays ? {}
+			fn.call(@)
+
+		# Apply validations after delays (and other setup)
 		for name, validators of @.constructor.validators ? {}
 			do (name, validators) =>
 				@[name].errors = ko.dependentObservable ->
@@ -70,10 +75,7 @@ class Model
 				null
 
 
-		# Apply delays
-		for fn in @.constructor._delays ? {}
-			fn.call(@)
-		
+
 	@_delayed: (fn) ->
 		@_delays ?= []
 		@_delays.push(fn)

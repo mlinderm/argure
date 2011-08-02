@@ -37,13 +37,13 @@
 				<form class="ui-form" data-bind="submit: do_submit">
 					<fieldset>
 						<legend>Setup SPADE Analysis</legend>
-						<div class="ui-horizontal">
-							<label for='slctdFiles'>Select Files for Analysis</label>
-							<select id='slctdFiles' data-bind='collectionMultiSelect: files, optionsText: "name"' multiple='multiple'></select>
+						<div data-bind="validate: files_slct" class="ui-horizontal">
+							<label for='files'>Select Files for Analysis</label>
+							<select id='files' data-bind='collectionMultiSelect: files, optionsText: "name"' multiple='multiple'></select>
 						</div>
-						<div class="ui-horizontal-last">
-							<label for='clustParams'>Select Clustering Parameters</label>
-							<select id='clustParams' data-bind='collectionMultiSelect: clusterParams' multiple='multiple' name='clustParams'></select>
+						<div data-bind="validate: clusterParams_slct" class="ui-horizontal-last">
+							<label for='clusterParams'>Select Clustering Parameters</label>
+							<select id='clusterParams' data-bind='collectionMultiSelect: clusterParams' multiple='multiple'></select>
 						</div>
 						<ul id='panels' data-bind='collectionTemplate: panels, validate: panels'></ul>
 						<button data-bind="click: create_panel">Create Another Panel</button>
@@ -82,20 +82,20 @@
 						super()
 						@create_panel @
 
+					common_params: (files) -> _.intersect.apply _, (f.pN for f in files)
+					
 					create_panel: -> @panels.push(new SpadePanel @, @files_slct)
 					do_submit: ->
 						if @errors.empty() then alert("Submitted") else alert("Errors still present")
 						false
 					
-					common_params: (files) -> _.intersect.apply _, (f.pN for f in files)
-
 					@include Argure.Extensions.Set
 
-					@collectionMultiSelect 'files'
-					@collectionMultiSelect 'clusterParams'
+					@collectionMultiSelect 'files', minSelected: 1
+					@collectionMultiSelect 'clusterParams', minSelected: 1
 					@relate (c) ->
 						c.method 'clusterParams_opts = common_params(files_slct)'
-
+							
 					@collection 'panels', initial: []
 					@validate 'panels', ->
 						@panels().length <= 1 || (_.intersect.apply _, (p.panelFiles_slct() for p in @panels())).length == 0

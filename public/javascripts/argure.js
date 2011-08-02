@@ -290,7 +290,7 @@ arguments),this._chain)}});j.prototype.chain=function(){this._chain=!0;return th
     });
   };
   apply_validate_extensions = function() {
-    var _base, _ref, _ref2;
+    var _base, _ref, _ref2, _ref3, _ref4;
         if ((_ref = (_base = ko.bindingHandlers).validate) != null) {
       _ref;
     } else {
@@ -319,11 +319,49 @@ arguments),this._chain)}});j.prototype.chain=function(){this._chain=!0;return th
         }
       };
     };
-    return (_ref2 = this.validateRange) != null ? _ref2 : this.validateRange = function(name, min, max) {
-      return this.validate(name, function() {
-        var _ref3;
-        return (max >= (_ref3 = this[name]()) && _ref3 >= min);
-      }, "" + name + " not in valid range of " + min + ".." + max);
+        if ((_ref2 = this.validatePresenceOf) != null) {
+      _ref2;
+    } else {
+      this.validatePresenceOf = function(name, options) {
+        if (options == null) {
+          options = {};
+        }
+        this.validate(name, function() {
+          var value;
+          value = this[name]();
+          return (value != null) && (typeof value !== "string" || value !== "");
+        }, "" + name + " cannot be blank");
+        return null;
+      };
+    };
+        if ((_ref3 = this.validateNumericalityOf) != null) {
+      _ref3;
+    } else {
+      this.validateNumericalityOf = function(name, options) {
+        var maximum, minimum, _ref4, _ref5, _ref6;
+        if (options == null) {
+          options = {};
+        }
+        _ref6 = [(_ref4 = options.minimum) != null ? _ref4 : -Infinity, (_ref5 = options.maximum) != null ? _ref5 : Infinity], minimum = _ref6[0], maximum = _ref6[1];
+        this.validate(name, function() {
+          var value;
+          value = this[name]();
+          return !isNaN(value) && ((maximum >= value && value >= minimum));
+        }, "" + name + " must be a number in the range " + minimum + ".." + maximum);
+        return null;
+      };
+    };
+    return (_ref4 = this.validateLengthOf) != null ? _ref4 : this.validateLengthOf = function(name, options) {
+      var maximum, minimum, _ref5, _ref6, _ref7;
+      if (options == null) {
+        options = {};
+      }
+      _ref7 = [(_ref5 = options.minimum) != null ? _ref5 : -Infinity, (_ref6 = options.maximum) != null ? _ref6 : Infinity], minimum = _ref7[0], maximum = _ref7[1];
+      this.validate(name, function() {
+        var _ref8;
+        return (maximum >= (_ref8 = this[name]().length) && _ref8 >= minimum);
+      }, "" + name + " must have length in range " + minimum + ".." + maximum);
+      return null;
     };
   };
   apply_set_extensions = function() {
@@ -332,16 +370,23 @@ arguments),this._chain)}});j.prototype.chain=function(){this._chain=!0;return th
       _ref;
     } else {
       this.collectionMultiSelect = function(name, options) {
-        var _ref2;
+        var max, min, _ref2, _ref3, _ref4, _ref5;
         if (options == null) {
-          options = void 0;
+          options = {};
         }
         this.collection(name + '_opts', {
-          initial: options != null ? options.initialOpts : void 0
+          initial: options.initialOpts
         });
         this.collection(name + '_slct', {
-          initial: (_ref2 = options != null ? options.initialSlct : void 0) != null ? _ref2 : []
+          initial: (_ref2 = options.initialSlct) != null ? _ref2 : []
         });
+        if ((this.validateLengthOf != null) && ((options.minSelected != null) || (options.maxSelected != null))) {
+          _ref5 = [(_ref3 = options.minSelected) != null ? _ref3 : 0, (_ref4 = options.maxSelected) != null ? _ref4 : Infinity], min = _ref5[0], max = _ref5[1];
+          this.validateLengthOf(name + '_slct', {
+            minimum: min,
+            maximum: max
+          });
+        }
         this._delayed(function() {
           this[name] = {
             opts: this[name + '_opts'],
@@ -352,13 +397,13 @@ arguments),this._chain)}});j.prototype.chain=function(){this._chain=!0;return th
         return this._delayed(function() {
           if (ko.isObservable(this[name + '_opts']) && ko.observable(this[name + '_slct'])) {
             return this[name + '_opts'].state.subscribe(__bind(function(value) {
-              var cn, item, orphans, _i, _len, _ref3;
+              var cn, item, orphans, _i, _len, _ref6;
               orphans = (function() {
-                var _i, _len, _ref3, _results;
-                _ref3 = this[name + '_slct'].state();
+                var _i, _len, _ref6, _results;
+                _ref6 = this[name + '_slct'].state();
                 _results = [];
-                for (_i = 0, _len = _ref3.length; _i < _len; _i++) {
-                  item = _ref3[_i];
+                for (_i = 0, _len = _ref6.length; _i < _len; _i++) {
+                  item = _ref6[_i];
                   if (value.indexOf(item) < 0) {
                     _results.push(item);
                   }
@@ -367,9 +412,9 @@ arguments),this._chain)}});j.prototype.chain=function(){this._chain=!0;return th
               }).call(this);
               if (orphans.length) {
                 this[name + '_slct'].state.removeAll(orphans);
-                _ref3 = this[name + '_slct'].constraints();
-                for (_i = 0, _len = _ref3.length; _i < _len; _i++) {
-                  cn = _ref3[_i];
+                _ref6 = this[name + '_slct'].constraints();
+                for (_i = 0, _len = _ref6.length; _i < _len; _i++) {
+                  cn = _ref6[_i];
                   this.addConstraint(cn, name + '_slct');
                 }
               }
@@ -618,14 +663,19 @@ arguments),this._chain)}});j.prototype.chain=function(){this._chain=!0;return th
         con = new Argure.Constraint(constraint);
         this._methods.push((_ref9 = this.constructor.build_constraint_callback) != null ? _ref9.call(this, con) : void 0);
       }
-      _ref11 = (_ref10 = this.constructor.validators) != null ? _ref10 : {};
+      _ref11 = (_ref10 = this.constructor._delays) != null ? _ref10 : {};
+      for (_k = 0, _len3 = _ref11.length; _k < _len3; _k++) {
+        fn = _ref11[_k];
+        fn.call(this);
+      }
+      _ref13 = (_ref12 = this.constructor.validators) != null ? _ref12 : {};
       _fn2 = __bind(function(name, validators) {
         this[name].errors = ko.dependentObservable(function() {
-          var result, v, valid, _k, _len3;
+          var result, v, valid, _l, _len4;
           valid = true;
           this.errors.clear(name);
-          for (_k = 0, _len3 = validators.length; _k < _len3; _k++) {
-            v = validators[_k];
+          for (_l = 0, _len4 = validators.length; _l < _len4; _l++) {
+            v = validators[_l];
             result = v.call(this);
             if (!result) {
               this.errors.add(name, v.message);
@@ -636,14 +686,9 @@ arguments),this._chain)}});j.prototype.chain=function(){this._chain=!0;return th
         }, this);
         return null;
       }, this);
-      for (name in _ref11) {
-        validators = _ref11[name];
+      for (name in _ref13) {
+        validators = _ref13[name];
         _fn2(name, validators);
-      }
-      _ref13 = (_ref12 = this.constructor._delays) != null ? _ref12 : {};
-      for (_k = 0, _len3 = _ref13.length; _k < _len3; _k++) {
-        fn = _ref13[_k];
-        fn.call(this);
       }
     }
     Model._delayed = function(fn) {

@@ -138,23 +138,42 @@ apply_validate_extensions = ->
 				</div>
 				"""
 			ko.bindingHandlers.css.update element, (->
-				{ "ui-state-error": value.errors } 
+				{ "ui-state-error": value.errors }
 			), allBindingsAccessor, viewModel
 
-	@validateRange ?= (name, min, max) ->
+	@validatePresenceOf ?= (name, options={}) ->
 		@validate name, ->
-			return max >= @[name]() >= min
-		, "#{name} not in valid range of #{min}..#{max}"
+			value = @[name]()
+			return value? && (typeof value != "string" || value != "")
+		, "#{name} cannot be blank"
+		null
 
+	@validateNumericalityOf ?= (name, options={}) ->
+		[minimum, maximum] = [(options.minimum ? -Infinity), (options.maximum ? Infinity)]
+		@validate name, ->
+			value = @[name]()
+			return !isNaN(value) && (maximum >= value >= minimum)
+		, "#{name} must be a number in the range #{minimum}..#{maximum}"
+		null
+
+	@validateLengthOf ?= (name, options={}) ->
+		[minimum, maximum] = [(options.minimum ? -Infinity), (options.maximum ? Infinity)]
+		@validate name, ->
+			return maximum >= @[name]().length >= minimum
+		, "#{name} must have length in range #{minimum}..#{maximum}"
+		null
 
 #
 # Set Extensions
 #
 apply_set_extensions = ->
-	@collectionMultiSelect ?= (name, options=undefined) ->
-		@collection name+'_opts', initial: options?.initialOpts
-		@collection name+'_slct', initial: options?.initialSlct ? []
-		
+	@collectionMultiSelect ?= (name, options={}) ->
+		@collection name+'_opts', initial: options.initialOpts
+		@collection name+'_slct', initial: options.initialSlct ? []
+		if @validateLengthOf? && (options.minSelected? || options.maxSelected?)
+			[min, max] = [options.minSelected ? 0, options.maxSelected ? Infinity]
+			@validateLengthOf name+'_slct', { minimum: min, maximum: max }
+
 		# Create a meta property that can be used in bindings, etc. 
 		@_delayed ->
 			@[name] =

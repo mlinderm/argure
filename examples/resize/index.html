@@ -64,7 +64,9 @@
 					c.method 'relHeight = if ratio then relWidth else relHeight', undefined, (ratio) -> ratio
 					c.method 'relWidth  = if ratio then relHeight else relWidth', undefined, (ratio) -> ratio
 
-				@validateRange n, 0, Infinity for n in ['relHeight', 'relWidth', 'absHeight', 'absWidth']
+				for n in ['relHeight', 'relWidth', 'absHeight', 'absWidth']
+					@validatePresenceOf n
+					@validateNumericalityOf n, minimum: 0
 					
 
 			this.resizer = new Resizer(1000, 1000)
