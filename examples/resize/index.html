@@ -2,67 +2,74 @@
 <html>
 	<head>
 		<title> Argure Demo: Image Resizing </title>
+		<link href="../../public/stylesheets/ui.core.css" media="screen, projection" rel="stylesheet" type="text/css" /> 
+		<link href="../../public/stylesheets/ui.form.css" media="screen, projection" rel="stylesheet" type="text/css" /> 
 		<script src="../../spec/vendor/jquery-1.6.js"></script>
 		<script src="../../spec/vendor/jquery.tmpl.js"></script>
 		<script src="../../spec/vendor/knockout-1.2.1.debug.js"></script>
 		<script src="../../public/javascripts/argure.js"></script>
 	</head>
 	<body>
-		<h1>
-		Resize Image	
-		</h1>
-		<div id="resizeArgure">
-			<form id="resize">
-
+		<form id="resize" data-bind="submit: do_submit" class='ui-widget'>
+			<fieldset>
+				<legend>Resize Image</legend>
 				<p>Initial Height: <span data-bind="text: initHeight"></span></p>
 				<p>Initial Width: <span data-bind="text: initWidth"></span></p>
+				<div data-bind="validate: absHeight">
+					<label for="absHeight">Absolute Height</label>
+					<input type="text" id="absHeight" data-bind="value: absHeight"/>
+				</div>
+				<div data-bind="validate: relHeight">
+					<label for="relHeight">Relative Height</label>
+					<input type="text" id="relHeight" data-bind="value: relHeight"/>
+				</div>
+				<div data-bind="validate: absWidth">
+					<label for="absWidth">Absolute Width</label>
+					<input type="text" id="absWidth" data-bind="value: absWidth"/>
+				</div>
+				<div data-bind="validate: relWidth">
+					<label for="relWidth">Relative Width</label>
+					<input type="text" id="relWidth" data-bind="value: relWidth"/>
+				</div>
+				<div>
+					<label for="ratio">Lock Ratio</label>
+					<input type="checkbox" id="ratio" data-bind="checked: ratio"/>
+				</div>
+				<button type="submit">Resize</button>
+			</fieldset>		
+		</form>
 
-				<label for="absHeight">Absolute Height</label>
-				<input type="text" id="absHeight" data-bind="value: absHeight"/>
-				<span data-bind="text: absHeight.priority"></span>
-				<br />
-				<label for="relHeight">Relative Height</label>
-				<input type="text" id="relHeight" data-bind="value: relHeight"/>
-				<span data-bind="text: relHeight.priority"></span>
-				<br />
-				<label for="absWidth">Absolute Width</label>
-				<input type="text" id="absWidth" data-bind="value: absWidth"/>
-				<span data-bind="text: absWidth.priority"></span>
-				<br />
-				<label for="relWidth">Relative Width</label>
-				<input type="text" id="relWidth" data-bind="value: relWidth"/>
-				<span data-bind="text: relWidth.priority"></span>
-				<br />
-				<label for="ratio">Lock Ratio</label>
-				<input type="checkbox" id="ratio" data-bind="checked: ratio"/>
-				<span data-bind="text: ratio.priority"></span>
+		<script type="text/coffeescript" charset="utf-8">
+			class Resizer extends Argure.Model
+				constructor: (@initHeight, @initWidth) ->
+					super()
 
-			</form>
+				do_submit: ->
+					if @errors.empty() then alert("Resized") else alert("Errors still present")
+					false
 
-			<script type="text/coffeescript" charset="utf-8">
-				class Resizer extends Argure.Model
-					constructor: (@initHeight, @initWidth) ->
-						super()
-					@observe 'absHeight'
-					@observe 'relHeight', initial: 100
-					@observe 'absWidth'
-					@observe 'relWidth', initial: 100
-					@observe 'ratio', initial: false
+				@observe 'absHeight'
+				@observe 'relHeight', initial: 100
+				@observe 'absWidth'
+				@observe 'relWidth', initial: 100
+				@observe 'ratio', initial: false
+				
+				@relate (c) ->
+					c.method 'absHeight = (relHeight / 100.0) * initHeight'
+					c.method 'relHeight = (absHeight / initHeight) * 100.0' 
+				@relate (c) ->
+					c.method 'absWidth = (relWidth / 100.0) * initWidth'
+					c.method 'relWidth = (absWidth / initWidth) * 100.0' 
+				@relate (c) ->
+					c.method 'relHeight = if ratio then relWidth else relHeight', undefined, (ratio) -> ratio
+					c.method 'relWidth  = if ratio then relHeight else relWidth', undefined, (ratio) -> ratio
+
+				@validateRange n, 0, Infinity for n in ['relHeight', 'relWidth', 'absHeight', 'absWidth']
 					
-					@relate (c) ->
-						c.method 'absHeight = (relHeight / 100.0) * initHeight'
-						c.method 'relHeight = (absHeight / initHeight) * 100.0' 
-					@relate (c) ->
-						c.method 'absWidth = (relWidth / 100.0) * initWidth'
-						c.method 'relWidth = (absWidth / initWidth) * 100.0' 
-					@relate (c) ->
-						c.method 'relHeight = if ratio then relWidth else relHeight',undefined, (ratio) -> ratio
-						c.method 'relWidth  = if ratio then relHeight else relWidth',undefined, (ratio)-> ratio
 
-				this.resizer = new Resizer(1000, 1000)
-				ko.applyBindings(this.resizer)
-			</script>
+			this.resizer = new Resizer(1000, 1000)
+			ko.applyBindings(this.resizer)
+		</script>
 							
-		</div>
 	</body>
 </html>

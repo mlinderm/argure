@@ -290,30 +290,40 @@ arguments),this._chain)}});j.prototype.chain=function(){this._chain=!0;return th
     });
   };
   apply_validate_extensions = function() {
-    var _base, _ref;
-    return (_ref = (_base = ko.bindingHandlers).validate) != null ? _ref : _base.validate = {
-      update: function(element, valueAccessor, allBindingsAccessor, viewModel) {
-        var msg, value;
-        value = valueAccessor();
-        $(element).children('.argure-error-message').remove();
-        if (value.errors()) {
-          $(element).prepend("<div class='argure-error-message'>\n	<strong>Errors Detected:</strong>\n	<nl>\n		" + ((function() {
-            var _i, _len, _ref2, _results;
-            _ref2 = viewModel.errors.get(value.cell);
-            _results = [];
-            for (_i = 0, _len = _ref2.length; _i < _len; _i++) {
-              msg = _ref2[_i];
-              _results.push("<li>" + msg + "</li>");
-            }
-            return _results;
-          })()) + "\n	</nl>\n</div>");
+    var _base, _ref, _ref2;
+        if ((_ref = (_base = ko.bindingHandlers).validate) != null) {
+      _ref;
+    } else {
+      _base.validate = {
+        update: function(element, valueAccessor, allBindingsAccessor, viewModel) {
+          var msg, value;
+          value = valueAccessor();
+          $(element).children('.argure-error-message').remove();
+          if (ko.utils.unwrapObservable(value.errors)) {
+            $(element).prepend("<div class='argure-error-message'>\n	<strong>Errors Detected:</strong>\n	<nl>\n		" + ((function() {
+              var _i, _len, _ref2, _results;
+              _ref2 = viewModel.errors.get(value.cell);
+              _results = [];
+              for (_i = 0, _len = _ref2.length; _i < _len; _i++) {
+                msg = _ref2[_i];
+                _results.push("<li>" + msg + "</li>");
+              }
+              return _results;
+            })()) + "\n	</nl>\n</div>");
+          }
+          return ko.bindingHandlers.css.update(element, (function() {
+            return {
+              "ui-state-error": value.errors
+            };
+          }), allBindingsAccessor, viewModel);
         }
-        return ko.bindingHandlers.css.update(element, (function() {
-          return {
-            "ui-state-error": value.errors
-          };
-        }), allBindingsAccessor, viewModel);
-      }
+      };
+    };
+    return (_ref2 = this.validateRange) != null ? _ref2 : this.validateRange = function(name, min, max) {
+      return this.validate(name, function() {
+        var _ref3;
+        return (max >= (_ref3 = this[name]()) && _ref3 >= min);
+      }, "" + name + " not in valid range of " + min + ".." + max);
     };
   };
   apply_set_extensions = function() {

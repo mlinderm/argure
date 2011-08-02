@@ -128,7 +128,7 @@ apply_validate_extensions = ->
 		update: (element, valueAccessor, allBindingsAccessor, viewModel) ->
 			value = valueAccessor()
 			$(element).children('.argure-error-message').remove()
-			if value.errors()  # Insert error messages if they exist
+			if ko.utils.unwrapObservable(value.errors)  # Insert error messages if they exist
 				$(element).prepend """
 				<div class='argure-error-message'>
 					<strong>Errors Detected:</strong>
@@ -141,6 +141,10 @@ apply_validate_extensions = ->
 				{ "ui-state-error": value.errors } 
 			), allBindingsAccessor, viewModel
 
+	@validateRange ?= (name, min, max) ->
+		@validate name, ->
+			return max >= @[name]() >= min
+		, "#{name} not in valid range of #{min}..#{max}"
 
 
 #
