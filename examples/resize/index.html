@@ -61,8 +61,11 @@
 					c.method 'absWidth = (relWidth / 100.0) * initWidth'
 					c.method 'relWidth = (absWidth / initWidth) * 100.0' 
 				@relate (c) ->
-					c.method 'relHeight = if ratio then relWidth else relHeight', undefined, (ratio) -> ratio
-					c.method 'relWidth  = if ratio then relHeight else relWidth', undefined, (ratio) -> ratio
+					c.when('ratio').method 'relHeight = relWidth'
+					c.when('ratio').method 'relWidth = relHeight'
+				
+					#c.method 'relHeight = if ratio then relWidth else relHeight', undefined, (ratio) -> ratio
+					#c.method 'relWidth  = if ratio then relHeight else relWidth', undefined, (ratio) -> ratio
 
 				for n in ['relHeight', 'relWidth', 'absHeight', 'absWidth']
 					@validatePresenceOf n

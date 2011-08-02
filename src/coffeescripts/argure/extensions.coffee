@@ -54,10 +54,11 @@ apply_deltaBlue_solver = ->
 		return observable
 	
 	@build_constraint_callback ?= (c)->
+		c.currentMethod = undefined
 		for method in c.methods
 			@[method.output].constraints?(c)
 			@[i].constraints?(c) for i in method.inputs
-		null
+		c
 
 	@_delayed ->
 		@decreaseStrength = (obs, preCn) ->

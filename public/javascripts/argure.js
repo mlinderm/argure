@@ -137,6 +137,7 @@ arguments),this._chain)}});j.prototype.chain=function(){this._chain=!0;return th
     } else {
       this.build_constraint_callback = function(c) {
         var i, method, _base, _base2, _i, _j, _len, _len2, _ref3, _ref4;
+        c.currentMethod = void 0;
         _ref3 = c.methods;
         for (_i = 0, _len = _ref3.length; _i < _len; _i++) {
           method = _ref3[_i];
@@ -151,7 +152,7 @@ arguments),this._chain)}});j.prototype.chain=function(){this._chain=!0;return th
             }
           }
         }
-        return null;
+        return c;
       };
     };
     this._delayed(function() {
@@ -513,44 +514,62 @@ arguments),this._chain)}});j.prototype.chain=function(){this._chain=!0;return th
     return _.uniq(v.operands);
   };
   Method = (function() {
-    function Method(inputs, output, body, condition) {
-      this.inputs = inputs;
-      this.output = output;
-      this.body = body;
-      this.condition = condition;
+    function Method(constraint, inputs, output, body, condition) {
+      this.constraint = constraint;
+      this.inputs = inputs != null ? inputs : void 0;
+      this.output = output != null ? output : void 0;
+      this.body = body != null ? body : void 0;
+      this.condition = condition != null ? condition : void 0;
     }
+    Method.prototype.when = function(body_or_code) {
+      this.condition = body_or_code;
+      return this;
+    };
+    Method.prototype.method = function(args_or_code, body) {
+      var assignment, ast, i, o, _ref;
+      if (typeof args_or_code === "string") {
+        ast = CoffeeScript.nodes(args_or_code);
+        assignment = ast.unwrap();
+        if (assignment.constructor.name === "Assign") {
+          this.output = extract_operands(assignment.variable)[0];
+          this.inputs = extract_operands(assignment.value);
+          this.body = assignment.value.compile();
+        } else {
+          throw new Error("Ill-formed constraint method: No assignment found");
+        }
+      } else if (typeof args_or_code === "object") {
+        for (o in args_or_code) {
+          i = args_or_code[o];
+          _ref = [o, i], this.output = _ref[0], this.inputs = _ref[1];
+        }
+        this.body = body;
+      } else {
+        throw new Error("Unsupported method specification");
+      }
+      if (this.condition != null) {
+        this.condition = (typeof this.condition === "string" ? (ast = (CoffeeScript.nodes(this.condition)).unwrap(), this.inputs = _.union(this.inputs, extract_operands(ast)), ast.compile()) : this.condition);
+      }
+      if ((this.condition != null) && typeof this.condition !== "function") {
+        eval("this.condition = function(" + (this.inputs.join(',')) + ") { return " + this.condition + "; }");
+      }
+      if (typeof this.body !== "function") {
+        eval("this.body = function(" + (this.inputs.join(',')) + ") { return " + this.body + "; }");
+      }
+      this.constraint.methods.push(this);
+      return this;
+    };
     return Method;
   })();
   Constraint = (function() {
     function Constraint(formulas) {
       this.methods = [];
-      this.currentMethod = void 0;
       formulas.call(this, this);
     }
-    Constraint.prototype.method = function(args_or_code, body, condition) {
-      var assignment, ast, i, inputs, o, output, _ref;
-      if (typeof args_or_code === "string") {
-        ast = CoffeeScript.nodes(args_or_code);
-        assignment = ast.unwrap();
-        if (assignment.constructor.name === "Assign") {
-          output = extract_operands(assignment.variable)[0];
-          inputs = extract_operands(assignment.value);
-          eval("body = function(" + (inputs.join(',')) + ") { return " + (assignment.value.compile()) + "; }");
-          return this.methods.push(new Method(inputs, output, body, condition));
-        } else {
-          if (!(ev.inputs != null) || !(ev.output != null)) {
-            throw new Error("Ill formed constraint method: no inputs or output found");
-          }
-        }
-      } else if (typeof args_or_code === "object") {
-        for (o in args_or_code) {
-          i = args_or_code[o];
-          _ref = [o, i], output = _ref[0], inputs = _ref[1];
-        }
-        return this.methods.push(new Method(inputs, output, body, condition));
-      } else {
-        throw new Error("Unsupported method specification");
-      }
+    Constraint.prototype.when = function(body_or_code) {
+      return (new Method(this)).when(body_or_code);
+    };
+    Constraint.prototype.method = function(args_or_code, body) {
+      return (new Method(this)).method(args_or_code, body);
     };
     return Constraint;
   })();
