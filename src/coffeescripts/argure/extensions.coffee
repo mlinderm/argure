@@ -31,6 +31,8 @@ apply_deltaBlue_solver = ->
 		state    = observable_kind initial_value
 		priority = ko.observable @priority(false)
 		wkStrength = if initial_value!=undefined then 0 else -1
+		_preCallback = []
+		_postCallback = []
 		_constraints = []
 		observable = ko.dependentObservable
 			read : -> state()
@@ -38,7 +40,9 @@ apply_deltaBlue_solver = ->
 				priority(@priority())
 				wkStrength = @priority(false)
 				state(value)
+				callback.call(this) for callback in _preCallback
 				@addConstraint(cn, name) for cn in _constraints
+				callback.call(this) for callback in _postCallback
 				return null
 			owner: @
 		observable.cell = name
@@ -50,6 +54,12 @@ apply_deltaBlue_solver = ->
 		observable.constraints = (value) ->
 			_constraints = _.union(_constraints, value) if value?
 			_constraints
+		observable.preCallback = (value) ->
+			_preCallback = _.union(_preCallback, value) if value?
+			_preCallback
+		observable.postCallback = (value) ->
+			_postCallback = _.union(_postCallback, value) if value?
+			_postCallback
 
 		return observable
 	
