@@ -56,6 +56,10 @@ class Model
 			con = new Argure.Constraint constraint
 			@_methods.push @.constructor.build_constraint_callback?.call @, con
 
+		for obs, callback of @.constructor.precalls ? []
+			@[obs].preCallback(callback)
+		for obs, callback of @.constructor.postcalls ? []
+			@[obs].postCallback(callback)
 		# Apply delays
 		for fn in @.constructor._delays ? {}
 			fn.call(@)
@@ -105,7 +109,13 @@ class Model
 		validator.message = message ? "${name} failed validation"
 		((@validators ?= {})[name] ?= []).push(validator)
 		
-
+	@preCall : (name,func) ->
+		throw new Error("You must specify callback methods") if typeof func != "function"
+		((@precalls ?= {})[name] ?= []).push(func)
+		
+	@postCall : (name,func) ->
+		throw new Error("You must specify callback methods") if typeof func != "function"
+		((@postcalls ?= {})[name] ?= []).push(func)
 
 namespace 'Argure', (exports) ->
 	exports.Model = Model

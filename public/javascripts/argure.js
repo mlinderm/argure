@@ -92,23 +92,33 @@ arguments),this._chain)}});j.prototype.chain=function(){this._chain=!0;return th
       _ref;
     } else {
       this.build_observable_callback = function(name, observable_kind, initial_value) {
-        var observable, priority, state, wkStrength, _constraints;
+        var observable, priority, state, wkStrength, _constraints, _postCallback, _preCallback;
         state = observable_kind(initial_value);
         priority = ko.observable(this.priority(false));
         wkStrength = initial_value !== void 0 ? 0 : -1;
+        _preCallback = [];
+        _postCallback = [];
         _constraints = [];
         observable = ko.dependentObservable({
           read: function() {
             return state();
           },
           write: function(value) {
-            var cn, _i, _len;
+            var callback, cn, _i, _j, _k, _len, _len2, _len3;
             priority(this.priority());
             wkStrength = this.priority(false);
             state(value);
-            for (_i = 0, _len = _constraints.length; _i < _len; _i++) {
-              cn = _constraints[_i];
+            for (_i = 0, _len = _preCallback.length; _i < _len; _i++) {
+              callback = _preCallback[_i];
+              callback.call(this);
+            }
+            for (_j = 0, _len2 = _constraints.length; _j < _len2; _j++) {
+              cn = _constraints[_j];
               this.addConstraint(cn, name);
+            }
+            for (_k = 0, _len3 = _postCallback.length; _k < _len3; _k++) {
+              callback = _postCallback[_k];
+              callback.call(this);
             }
             return null;
           },
@@ -128,6 +138,18 @@ arguments),this._chain)}});j.prototype.chain=function(){this._chain=!0;return th
             _constraints = _.union(_constraints, value);
           }
           return _constraints;
+        };
+        observable.preCallback = function(value) {
+          if (value != null) {
+            _preCallback = _.union(_preCallback, value);
+          }
+          return _preCallback;
+        };
+        observable.postCallback = function(value) {
+          if (value != null) {
+            _postCallback = _.union(_postCallback, value);
+          }
+          return _postCallback;
         };
         return observable;
       };
@@ -626,7 +648,7 @@ arguments),this._chain)}});j.prototype.chain=function(){this._chain=!0;return th
   })();
   Model = (function() {
     function Model(parent) {
-      var con, constraint, fn, method, name, observable, options, validators, _fn, _fn2, _i, _j, _k, _len, _len2, _len3, _priority_counter, _ref, _ref10, _ref11, _ref12, _ref13, _ref2, _ref3, _ref4, _ref5, _ref6, _ref7, _ref8, _ref9;
+      var callback, con, constraint, fn, method, name, obs, observable, options, validators, _fn, _fn2, _i, _j, _k, _len, _len2, _len3, _priority_counter, _ref, _ref10, _ref11, _ref12, _ref13, _ref14, _ref15, _ref16, _ref17, _ref2, _ref3, _ref4, _ref5, _ref6, _ref7, _ref8, _ref9;
       if (parent == null) {
         parent = void 0;
       }
@@ -682,12 +704,22 @@ arguments),this._chain)}});j.prototype.chain=function(){this._chain=!0;return th
         con = new Argure.Constraint(constraint);
         this._methods.push((_ref9 = this.constructor.build_constraint_callback) != null ? _ref9.call(this, con) : void 0);
       }
-      _ref11 = (_ref10 = this.constructor._delays) != null ? _ref10 : {};
-      for (_k = 0, _len3 = _ref11.length; _k < _len3; _k++) {
-        fn = _ref11[_k];
+      _ref11 = (_ref10 = this.constructor.precalls) != null ? _ref10 : [];
+      for (obs in _ref11) {
+        callback = _ref11[obs];
+        this[obs].preCallback(callback);
+      }
+      _ref13 = (_ref12 = this.constructor.postcalls) != null ? _ref12 : [];
+      for (obs in _ref13) {
+        callback = _ref13[obs];
+        this[obs].postCallback(callback);
+      }
+      _ref15 = (_ref14 = this.constructor._delays) != null ? _ref14 : {};
+      for (_k = 0, _len3 = _ref15.length; _k < _len3; _k++) {
+        fn = _ref15[_k];
         fn.call(this);
       }
-      _ref13 = (_ref12 = this.constructor.validators) != null ? _ref12 : {};
+      _ref17 = (_ref16 = this.constructor.validators) != null ? _ref16 : {};
       _fn2 = __bind(function(name, validators) {
         this[name].errors = ko.dependentObservable(function() {
           var result, v, valid, _l, _len4;
@@ -705,8 +737,8 @@ arguments),this._chain)}});j.prototype.chain=function(){this._chain=!0;return th
         }, this);
         return null;
       }, this);
-      for (name in _ref13) {
-        validators = _ref13[name];
+      for (name in _ref17) {
+        validators = _ref17[name];
         _fn2(name, validators);
       }
     }
@@ -776,6 +808,20 @@ arguments),this._chain)}});j.prototype.chain=function(){this._chain=!0;return th
       }
       validator.message = message != null ? message : "${name} failed validation";
       return ((_ref = (_base = ((_ref2 = this.validators) != null ? _ref2 : this.validators = {}))[name]) != null ? _ref : _base[name] = []).push(validator);
+    };
+    Model.preCall = function(name, func) {
+      var _base, _ref, _ref2;
+      if (typeof func !== "function") {
+        throw new Error("You must specify callback methods");
+      }
+      return ((_ref = (_base = ((_ref2 = this.precalls) != null ? _ref2 : this.precalls = {}))[name]) != null ? _ref : _base[name] = []).push(func);
+    };
+    Model.postCall = function(name, func) {
+      var _base, _ref, _ref2;
+      if (typeof func !== "function") {
+        throw new Error("You must specify callback methods");
+      }
+      return ((_ref = (_base = ((_ref2 = this.postcalls) != null ? _ref2 : this.postcalls = {}))[name]) != null ? _ref : _base[name] = []).push(func);
     };
     return Model;
   })();
