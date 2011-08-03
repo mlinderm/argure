@@ -22,7 +22,6 @@ extract_operands = (ast) ->
 
 class Method
 	constructor: (@constraint, @inputs=undefined, @output=undefined, @body=undefined, @condition=undefined) ->
-		#constructor: (@inputs, @output, @body, @condition) ->
 	
 	when: (body_or_code) ->
 		@condition = body_or_code
@@ -80,4 +79,4 @@ class Constraint
 		
 
 namespace 'Argure', (exports) ->
-	exports.Constraint = Constraint
+	exports.Constraint = Constraint	

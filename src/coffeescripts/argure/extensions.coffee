@@ -41,7 +41,7 @@ apply_deltaBlue_solver = ->
 				wkStrength = @priority(false)
 				state(value)
 				callback.call(this) for callback in _preCallback
-				@addConstraint(cn, name) for cn in _constraints
+				@addConstraint(cn, name,@cycleNum(true)) for cn in _constraints
 				callback.call(this) for callback in _postCallback
 				return null
 			owner: @
@@ -65,27 +65,38 @@ apply_deltaBlue_solver = ->
 	
 	@build_constraint_callback ?= (c)->
 		c.currentMethod = undefined
+		c.cycleDetectionNum = 0
 		for method in c.methods
 			@[method.output].constraints?(c)
 			@[i].constraints?(c) for i in method.inputs
 		c
-
+	
 	@_delayed ->
+		_cycleNum = 0
+		@cycleNum = (toInc)->
+			_cycleNum++ if toInc
+			_cycleNum
 		@decreaseStrength = (obs, preCn) ->
 			for cn in @[obs].constraints() when cn!= preCn
 				oldMethod = cn.currentMethod
 				[oldValue, oldStrength] = [@[oldMethod.output].state(), @[oldMethod.output].wkStrength()] if oldMethod?
 				@[oldMethod.output].wkStrength(@[oldMethod.output].priority())
-				@addConstraint(cn,obs) for cn in @[obs].constraints() when cn!=preCn
+				@addConstraint(cn,obs,@cycleNum(true)) for cn in @[obs].constraints() when cn!=preCn
 				if(oldMethod.output!=undefined and oldStrength != @[oldMethod.output].wkStrength())
 					@decreaseStrength(oldMethod.output, cn)
 
 		# Enforce
-		@addConstraint= (cn, preObs) ->
+		@addConstraint= (cn, preObs, cycleNum) ->
+			if(cn.cycleDetectionNum == cycleNum)
+				alert "Cycle detected."
+				throw new Error("Cycle detected.")
+			cn.cycleDetectionNum = cycleNum
+			
 			# Selected Method
+			
 			oldMethod = cn.currentMethod
 			[oldValue, oldStrength] = [@[oldMethod.output].state(), @[oldMethod.output].wkStrength()] if oldMethod?
-			
+				
 			minStr = Infinity
 			minMethod = undefined
 			for method in cn.methods
@@ -121,14 +132,14 @@ apply_deltaBlue_solver = ->
 				cn.currentMethod = minMethod
 				@[minMethod.output].wkStrength(newStrength)
 				
-				@addConstraint(nextCn, minMethod.output) for nextCn in @[minMethod.output].constraints() when nextCn != cn
+				@addConstraint(nextCn, minMethod.output, cycleNum) for nextCn in @[minMethod.output].constraints() when nextCn != cn
 				return null
 
  		null
 	@_delayed ->
 		for name, options of @.constructor.observables
 			for cn in @[name].constraints()
-				@addConstraint(cn)
+				@addConstraint(cn,name,@cycleNum(true))
 
 
 #
@@ -202,7 +213,7 @@ apply_set_extensions = ->
 					orphans = (item for item in @[name+'_slct'].state() when value.indexOf(item) < 0)
 					if orphans.length
 						this[name+'_slct'].state.removeAll(orphans)
-						@addConstraint(cn, name+'_slct') for cn in @[name+'_slct'].constraints()
+						@addConstraint(cn, name+'_slct',@cycleNum(true)) for cn in @[name+'_slct'].constraints()
 					null
 
 		

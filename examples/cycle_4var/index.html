@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<title> Argure Demo: Cycle Test 4 Var </title>
+		<script src="../../spec/vendor/jquery-1.6.js"></script>
+		<script src="../../spec/vendor/jquery.tmpl.js"></script>
+		<script src="../../spec/vendor/knockout-1.2.1.debug.js"></script>
+		<script src="../../public/javascripts/argure.js"></script>
+	</head>
+	<body>
+		<h1>
+		Cycle Test
+		</h1>
+		<div id="cycleTest">
+			<form id="cycleTest">
+				<label for="topVar">Top Value</label>
+				<input type="text" id="topVar" data-bind="value: topVar"/>
+				<br />
+				<label for="leftVar">Left Value</label>
+				<input type="text" id="leftVar" data-bind="value: leftVar"/>
+				<br />
+				<label for="rightVar">Right Value</label>
+				<input type="text" id="rightVar" data-bind="value: rightVar"/>
+				<br />
+				<label for="bottomVar">Bottom Value</label>
+				<input type="text" id="bottomVar" data-bind="value: bottomVar"/>
+				<br />
+			</form>
+
+			<script type="text/coffeescript" charset="utf-8">
+				class c4vTest extends Argure.Model
+					constructor: () ->
+						super()
+					
+					@observe 'topVar'
+					@observe 'leftVar'
+					@observe 'rightVar'
+					@observe 'bottomVar'
+					
+					@relate (c) ->
+						c.method 'topVar = leftVar*1 + rightVar*1'
+						c.method 'leftVar = topVar - rightVar'
+						c.method 'rightVar = topVar - leftVar'
+					@relate (c) ->
+						c.method 'bottomVar = leftVar*2 + rightVar*2'
+						c.method 'leftVar = bottomVar/2 - rightVar'
+						c.method 'rightVar = bottomVar/2 - leftVar'
+						
+				this.c4vTest = new c4vTest()
+				ko.applyBindings(this.c4vTest)
+			</script>
+							
+		</div>
+	</body>
+</html>
