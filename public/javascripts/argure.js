@@ -114,7 +114,7 @@ arguments),this._chain)}});j.prototype.chain=function(){this._chain=!0;return th
             }
             for (_j = 0, _len2 = _constraints.length; _j < _len2; _j++) {
               cn = _constraints[_j];
-              this.addConstraint(cn, name);
+              this.addConstraint(cn, name, this.cycleNum(true));
             }
             for (_k = 0, _len3 = _postCallback.length; _k < _len3; _k++) {
               callback = _postCallback[_k];
@@ -177,6 +177,14 @@ arguments),this._chain)}});j.prototype.chain=function(){this._chain=!0;return th
       };
     };
     this._delayed(function() {
+      var _cycleNum;
+      _cycleNum = 0;
+      this.cycleNum = function(toInc) {
+        if (toInc) {
+          _cycleNum++;
+        }
+        return _cycleNum;
+      };
       this.decreaseStrength = function(obs, preCn) {
         var cn, oldMethod, oldStrength, oldValue, _i, _j, _len, _len2, _ref3, _ref4, _ref5, _results;
         _ref3 = this[obs].constraints();
@@ -193,7 +201,7 @@ arguments),this._chain)}});j.prototype.chain=function(){this._chain=!0;return th
             for (_j = 0, _len2 = _ref5.length; _j < _len2; _j++) {
               cn = _ref5[_j];
               if (cn !== preCn) {
-                this.addConstraint(cn, obs);
+                this.addConstraint(cn, obs, this.cycleNum(true));
               }
             }
             _results.push(oldMethod.output !== void 0 && oldStrength !== this[oldMethod.output].wkStrength() ? this.decreaseStrength(oldMethod.output, cn) : void 0);
@@ -201,8 +209,13 @@ arguments),this._chain)}});j.prototype.chain=function(){this._chain=!0;return th
         }
         return _results;
       };
-      return this.addConstraint = function(cn, preObs) {
+      return this.addConstraint = function(cn, preObs, cycleNum) {
         var input, m, method, minMethod, minStr, name, newStrength, nextCn, oldMethod, oldStrength, oldValue, _base, _i, _j, _k, _len, _len2, _len3, _ref3, _ref4, _ref5, _ref6;
+        if (cn.cycleDetectionNum === cycleNum) {
+          alert("Cycle detected.");
+          throw new Error("Cycle detected.");
+        }
+        cn.cycleDetectionNum = cycleNum;
         oldMethod = cn.currentMethod;
         if (oldMethod != null) {
           _ref3 = [this[oldMethod.output].state(), this[oldMethod.output].wkStrength()], oldValue = _ref3[0], oldStrength = _ref3[1];
@@ -283,7 +296,7 @@ arguments),this._chain)}});j.prototype.chain=function(){this._chain=!0;return th
           for (_k = 0, _len3 = _ref6.length; _k < _len3; _k++) {
             nextCn = _ref6[_k];
             if (nextCn !== cn) {
-              this.addConstraint(nextCn, minMethod.output);
+              this.addConstraint(nextCn, minMethod.output, cycleNum);
             }
           }
           return null;
@@ -303,7 +316,7 @@ arguments),this._chain)}});j.prototype.chain=function(){this._chain=!0;return th
           _results2 = [];
           for (_i = 0, _len = _ref4.length; _i < _len; _i++) {
             cn = _ref4[_i];
-            _results2.push(this.addConstraint(cn));
+            _results2.push(this.addConstraint(cn, name, this.cycleNum(true)));
           }
           return _results2;
         }).call(this));
@@ -437,7 +450,7 @@ arguments),this._chain)}});j.prototype.chain=function(){this._chain=!0;return th
                 _ref6 = this[name + '_slct'].constraints();
                 for (_i = 0, _len = _ref6.length; _i < _len; _i++) {
                   cn = _ref6[_i];
-                  this.addConstraint(cn, name + '_slct');
+                  this.addConstraint(cn, name + '_slct', this.cycleNum(true));
                 }
               }
               return null;
@@ -547,6 +560,7 @@ arguments),this._chain)}});j.prototype.chain=function(){this._chain=!0;return th
     function Constraint(formulas) {
       this.methods = [];
       this.currentMethod = void 0;
+      this.cycleDetectionNum = 0;
       formulas.call(this, this);
     }
     Constraint.prototype.method = function(args_or_code, body, condition) {

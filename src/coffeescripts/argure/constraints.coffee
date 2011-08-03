@@ -28,6 +28,7 @@ class Constraint
 	constructor: (formulas) ->
 		@methods = []
 		@currentMethod = undefined
+		@cycleDetectionNum = 0
 		formulas.call(this, this)
 	
 	method: (args_or_code, body, condition) ->
