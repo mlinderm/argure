@@ -84,9 +84,9 @@ apply_deltaBlue_solver = ->
 
 		# Enforce
 		@addConstraint= (cn, preObs, cycleNum) ->
-			if(cn.cycleDetectionNum == cycleNum)
-				alert "Cycle detected."
-				throw new Error("Cycle detected.")
+#			if(cn.cycleDetectionNum == cycleNum)
+#				alert "Cycle detected."
+#				throw new Error("Cycle detected.")
 			cn.cycleDetectionNum = cycleNum
 			
 			# Selected Method
@@ -122,13 +122,21 @@ apply_deltaBlue_solver = ->
 						@decreaseStrength(oldMethod.output, cn)
 						return null
 				@[minMethod.output].state minMethod.body.apply(this, (ko.utils.unwrapObservable(@[name]) for name in minMethod.inputs)) # Execute Method
-#				cnGraph.detectCycle()
 				if(minMethod == oldMethod)
 					if(@[minMethod.output].state() == oldValue and newStrength == oldStrength)
 						return null
 				cn.currentMethod = minMethod
-				@[minMethod.output].wkStrength(newStrength)
 				
+				
+				#Cycle Detection
+				if(@[minMethod.output].wkStrength() == newStrength)
+					for nextCn in @[minMethod.output].constraints()
+						continue if nextCn == cn
+						if(nextCn.cycleDetectionNum == cycleNum)
+							alert "Cycle detected."
+							throw new Error("Cycle detected.")
+							
+				@[minMethod.output].wkStrength(newStrength)
 				@addConstraint(nextCn, minMethod.output, cycleNum) for nextCn in @[minMethod.output].constraints() when nextCn != cn
 				return null
 
