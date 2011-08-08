@@ -14,17 +14,11 @@
         
         <script type="text/coffeescript" charset="utf-8">
             class Camera extends Argure.Model       
-                constructor: (@initY,@initX,@zoom) ->
+                constructor: (@initY,@initX,@zoom,@gMap) ->
                     super()
                     @focusX(@initX)
                     @focusY(@initY)
                     @ratio(@zoom)
-                zoomInClick:    -> @ratio(@ratio()-1) if @ratio() > 0
-                zoomOutClick:   -> @ratio(@ratio()+1) if @ratio()
-                moveRightClick: -> @focusX(@focusX() + @ratio()*0.1) if (@focusX() <= @width() - @ratio()*0.1)
-                moveLeftClick:  -> @focusX(@focusX() - @ratio()*0.1) if (@focusX() >= @ratio()*0.1)
-                moveUpClick:    -> @focusY(@focusY() + @ratio()*0.1) if (@focusY() <= @height() - @ratio()*0.1)
-                moveDownClick:  -> @focusY(@focusY() - @ratio()*0.1) if (@focusY() >= @ratio()*0.1)
                 
                 @observe 'focusX'
                 @observe 'focusY'
@@ -62,19 +56,34 @@
                                         else
                                             focusY
                                             '''
+                @postCall 'minX', ->
+                    outCenter = new google.maps.LatLng(@centerY(),@centerX())
+                    @gMap.setCenter(outCenter)
+                @postCall 'maxX', ->
+                    outCenter = new google.maps.LatLng(@centerY(),@centerX())
+                    @gMap.setCenter(outCenter)
+                @postCall 'minY', ->
+                    outCenter = new google.maps.LatLng(@centerY(),@centerX())
+                    @gMap.setCenter(outCenter)
+                @postCall 'maxY', ->
+                    outCenter = new google.maps.LatLng(@centerY(),@centerX())
+                    @gMap.setCenter(outCenter)
+
 
 
 
             # /Camera
             this.initialize = () ->
-                camera = new Camera(23,121,4)
-                ko.applyBindings(camera)       
                 myOptions=
-                    zoom: camera.ratio()
-                    center: new google.maps.LatLng(camera.focusY(), camera.focusX())
+                    zoom: 4
+                    center: new google.maps.LatLng(23, 121)
                     disableDefaultUI: true
                     mapTypeId: google.maps.MapTypeId.ROADMAP
                 map = new google.maps.Map(document.getElementById("map_canvas"),myOptions)
+                
+                camera = new Camera(23,121,4,map)
+                ko.applyBindings(camera)       
+                
                 google.maps.event.addListenerOnce map, 'idle', ()->
                     inBound = map.getBounds()
                     camera.width(inBound.getNorthEast().lng() - inBound.getSouthWest().lng())
@@ -117,12 +126,6 @@
              &nbsp Right: <input data-bind="value: maxX">
              &nbsp Top: <input data-bind="value: maxY">
              &nbsp Bottom: <input data-bind="value: minY"></p>
-                <button data-bind="click: zoomInClick">Room In</button>
-                <button data-bind="click: zoomOutClick">Room Out</button>
-                <button data-bind="click: moveRightClick">Move right</button>
-                <button data-bind="click: moveLeftClick">Move left</button>
-                <button data-bind="click: moveUpClick">Move up</button>
-                <button data-bind="click: moveDownClick">Move down</button>
                 <br/><br/>
                 
             </form>
