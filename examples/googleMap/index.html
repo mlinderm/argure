@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta name="viewport" content="initial-scale=1.0, user-scalable=no" />
+        <meta http-equiv="content-type" content="text/html; charset=UTF-8"/>
+        <title>Google Maps JavaScript API v3 Example: Disabling Default UI</title>
+        
+        <script src="../../spec/vendor/jquery-1.6.js"></script>
+        <script src="../../spec/vendor/jquery.tmpl.js"></script>
+        <script src="../../spec/vendor/knockout-1.2.1.debug.js"></script>
+        <script src="../../public/javascripts/argure.js"></script>  
+        
+        <script type="text/javascript" src="http://maps.googleapis.com/maps/api/js?sensor=false"></script> 
+        
+        <script type="text/coffeescript" charset="utf-8">
+            class Camera extends Argure.Model       
+                constructor: (@initY,@initX,@zoom) ->
+                    super()
+                    @focusX(@initX)
+                    @focusY(@initY)
+                    @ratio(@zoom)
+                zoomInClick:    -> @ratio(@ratio()-1) if @ratio() > 0
+                zoomOutClick:   -> @ratio(@ratio()+1) if @ratio()
+                moveRightClick: -> @focusX(@focusX() + @ratio()*0.1) if (@focusX() <= @width() - @ratio()*0.1)
+                moveLeftClick:  -> @focusX(@focusX() - @ratio()*0.1) if (@focusX() >= @ratio()*0.1)
+                moveUpClick:    -> @focusY(@focusY() + @ratio()*0.1) if (@focusY() <= @height() - @ratio()*0.1)
+                moveDownClick:  -> @focusY(@focusY() - @ratio()*0.1) if (@focusY() >= @ratio()*0.1)
+                
+                @observe 'focusX'
+                @observe 'focusY'
+                @observe 'maxX'
+                @observe 'minX'
+                @observe 'maxY'
+                @observe 'minY'
+                @observe 'centerX'
+                @observe 'centerY'
+                @observe 'width', initial: 0
+                @observe 'height', initial: 0
+                @observe 'ratio'
+                @relate (c) ->
+                    c.method 'maxX=(centerX*1 + 0.5*width)'
+                    c.method 'centerX=(maxX - 0.5*width)'
+                @relate (c) ->
+                    c.method 'minX=(centerX - 0.5*width)'
+                    c.method 'centerX=(minX*1 + 0.5*width)'
+                @relate (c) ->
+                    c.method 'maxY=(centerY*1 + 0.5*height)'
+                    c.method 'centerY=(maxY - 0.5*height)'
+                @relate (c) ->
+                    c.method 'minY=(centerY - 0.5*height)'
+                    c.method 'centerY=(minY*1 + 0.5*height)'
+                @relate (c) ->
+                    c.method 'focusX = centerX'
+                    c.method 'centerX = focusX'
+                @relate (c) ->
+                    c.method 'focusY = centerY'
+                    c.method    '''
+                                        centerY = if focusY + 0.5 * height > 80
+                                            80 - 0.5 * height
+                                        else if focusY - 0.5 * height < -80  
+                                            -80 + 0.5 * height
+                                        else
+                                            focusY
+                                            '''
+
+
+
+            # /Camera
+            this.initialize = () ->
+                camera = new Camera(23,121,4)
+                ko.applyBindings(camera)       
+                myOptions=
+                    zoom: camera.ratio()
+                    center: new google.maps.LatLng(camera.focusY(), camera.focusX())
+                    disableDefaultUI: true
+                    mapTypeId: google.maps.MapTypeId.ROADMAP
+                map = new google.maps.Map(document.getElementById("map_canvas"),myOptions)
+                google.maps.event.addListenerOnce map, 'idle', ()->
+                    inBound = map.getBounds()
+                    camera.width(inBound.getNorthEast().lng() - inBound.getSouthWest().lng())
+                    camera.height(inBound.getNorthEast().lat() - inBound.getSouthWest().lat())
+                ,this
+                google.maps.event.addListener map, 'dragend', ()->
+                    inBound = map.getBounds()
+                    camera.width(inBound.getNorthEast().lng() - inBound.getSouthWest().lng())
+                    camera.height(inBound.getNorthEast().lat() - inBound.getSouthWest().lat())
+                    inCenter = map.getCenter()
+                    camera.focusX(inCenter.lng())
+                    camera.focusY(inCenter.lat())
+                    outCenter = new google.maps.LatLng(camera.centerY(),camera.centerX())
+                    map.setCenter(outCenter)
+                ,this
+                google.maps.event.addListener map, 'zoom_changed', ()->
+                    inBound = map.getBounds()
+                    camera.width(inBound.getNorthEast().lng() - inBound.getSouthWest().lng())
+                    camera.height(inBound.getNorthEast().lat() - inBound.getSouthWest().lat())
+                    camera.ratio(map.getZoom())
+                    outCenter = new google.maps.LatLng(camera.centerY(),camera.centerX())
+                    map.setCenter(outCenter)
+                null
+            
+            
+        
+        </script>
+    </head>
+
+    <body onload="initialize()">
+        <h1>
+        Camera Demo 
+        </h1>
+        <p id="cameraArgure">
+            <form id="camera">
+                <p>Center Longitude: <span data-bind="text: focusX"></span>
+             &nbsp Center Latitude: <span data-bind="text: focusY"></span>
+             &nbsp Ratio: <span data-bind="text: ratio">%</span></p>
+                <p>Left: <input data-bind="value: minX"> 
+             &nbsp Right: <input data-bind="value: maxX">
+             &nbsp Top: <input data-bind="value: maxY">
+             &nbsp Bottom: <input data-bind="value: minY"></p>
+                <button data-bind="click: zoomInClick">Room In</button>
+                <button data-bind="click: zoomOutClick">Room Out</button>
+                <button data-bind="click: moveRightClick">Move right</button>
+                <button data-bind="click: moveLeftClick">Move left</button>
+                <button data-bind="click: moveUpClick">Move up</button>
+                <button data-bind="click: moveDownClick">Move down</button>
+                <br/><br/>
+                
+            </form>
+
+                            
+        </p>
+
+        <div id="map_canvas" style="width : 720px; height: 360px; border: 10px solid gray"></div>
+    </body>
+</html>
