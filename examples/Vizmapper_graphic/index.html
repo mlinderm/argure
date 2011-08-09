@@ -36,9 +36,9 @@
 				for name in ['minX','maxX','minY','maxY','preserveValue','selectedInputFile']
 					@postCall name, -> 
 						@paper.clear()
-						@paper.path("M 50 50 l 0 100 l 100 0 l 0 -100 z")
-						@paper.path("M 50 "+(150-@minY())+" l "+@minX()+" 0 l "+(@maxX()-@minX())+" "+(@minY()-@maxY())+" l "+(100-@maxX())+" 0")
-			
+						@boundary = @paper.path("M 50 50 l 0 200 l 200 0 l 0 -200 z")
+						@boundary.attr({stroke: '#000', 'stroke-width': 2})
+						@curve = @paper.path("M 50 "+(250-@minY()*2)+" l "+@minX()*2+" 0 l "+2*(@maxX()-@minX())+" "+2*(@minY()-@maxY())+" l "+2*(100-@maxX())+" 0")
 			paper = new Raphael(document.getElementById('canvas_container'), 500, 500)
 			this.viz = new Vizmapper([
 				{name: "f1", minX: 20, maxX: 50, minY: 40, maxY: 80}
