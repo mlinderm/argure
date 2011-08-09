@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<title> Argure Demo: Vizmapper </title>
+		<script src="../../spec/vendor/jquery-1.6.js"></script>
+		<script src="../../spec/vendor/jquery.tmpl.js"></script>
+		<script src="../../spec/vendor/knockout-1.2.1.debug.js"></script>
+		<script src="../../spec/vendor/raphael-min.js"></script>
+		<script src="../../public/javascripts/argure.js"></script>
+
+		<script type="text/coffeescript" charset="utf-8">
+			class Vizmapper extends Argure.Model
+				constructor: (@inputFile,@paper) ->
+					super()
+				
+				@observe 'selectedInputFile'
+				@observe 'minX', initial : 0
+				@observe 'maxX', initial : 30
+				@observe 'minY', initial : 0
+				@observe 'maxY', initial : 30
+				@observe 'preserveValue', initial: false
+				
+				@relate (c) ->
+					c.method minX : ['selectedInputFile','preserveValue','minX'], (s,p,m) -> if p then m else s.minX
+				@relate (c) ->
+					c.method maxX : ['selectedInputFile','preserveValue','maxX'], (s,p,m) -> if p then m else s.maxX
+				@relate (c) ->
+					c.method minY : ['selectedInputFile','preserveValue','minY'], (s,p,m) -> if p then m else s.minY
+				@relate (c) ->
+					c.method maxY : ['selectedInputFile','preserveValue','maxY'], (s,p,m) -> if p then m else s.maxY
+				@preCall 'minX', ->@preserveValue(true) 
+				@preCall 'maxX', ->@preserveValue(true) 
+				@preCall 'minY', ->@preserveValue(true) 
+				@preCall 'maxY', ->@preserveValue(true) 
+				
+				for name in ['minX','maxX','minY','maxY','preserveValue','selectedInputFile']
+					@postCall name, -> 
+						@paper.clear()
+						@paper.path("M 50 50 l 0 100 l 100 0 l 0 -100 z")
+						@paper.path("M 50 "+(150-@minY())+" l "+@minX()+" 0 l "+(@maxX()-@minX())+" "+(@minY()-@maxY())+" l "+(100-@maxX())+" 0")
+			
+			paper = new Raphael(document.getElementById('canvas_container'), 500, 500)
+			this.viz = new Vizmapper([
+				{name: "f1", minX: 20, maxX: 50, minY: 40, maxY: 80}
+				{name: "f2", minX: 10, maxX: 80, minY: 20, maxY: 90}
+				{name: "f3", minX: 0, maxX: 100, minY: 60, maxY: 100}
+			],paper)
+			ko.applyBindings(this.viz)
+
+		</script>
+
+	</head>
+	<body>
+		<h1>
+		Vizmapper
+		</h1>
+		<div id="resizeArgure">
+			<form id="resize">
+				<label for="minX">X min</label>
+				<input type="text" id="minX" data-bind="value: minX"/>
+				&nbsp
+				<label for="maxX">X max</label>
+				<input type="text" id="maxX" data-bind="value: maxX"/>
+				<br />
+				<label for="minY">Y min</label>
+				<input type="text" id="minY" data-bind="value: minY"/>
+				&nbsp
+				<label for="maxY">Y max</label>
+				<input type="text" id="maxY" data-bind="value: maxY"/>
+				<br />
+				<label for="preserveValue">Preserve Value</label>
+				<input type="checkbox" id="preserveValue" data-bind="checked: preserveValue" />
+				<br />
+				<label>Select Input File
+				<select data-bind='options: inputFile, optionsText: "name", value: selectedInputFile'></select>
+			</form>
+		</div>
+		<div id="canvas_container"></div>  
+	</body>
+</html>
