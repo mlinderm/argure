@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<title> Argure Demo: Cycle Test 6 Var </title>
+		<script src="../../spec/vendor/jquery-1.6.js"></script>
+		<script src="../../spec/vendor/jquery.tmpl.js"></script>
+		<script src="../../spec/vendor/knockout-1.2.1.debug.js"></script>
+		<script src="../../public/javascripts/argure.js"></script>
+	</head>
+	<body>
+		<h1>
+		Cycle Test
+		</h1>
+		<div id="cycleTest">
+			<form id="cycleTest">
+				<p>Edit Top Var 1, Top Var 3 and Bottom Var 1 consecutively in any order to produce a cycle</p>
+				<p>Test: <span data-bind="text: test"></span></p>
+				
+
+				<label for="topVar1">Top Var 1</label>
+				<input type="text" id="topVar1" data-bind="value: topVar1"/>
+				<br />
+				<label for="topVar2">Top Var 2</label>
+				<input type="text" id="topVar2" data-bind="value: topVar2"/>
+				<br />
+				<label for="topVar3">Top Var 3</label>
+				<input type="text" id="topVar3" data-bind="value: topVar3"/>
+				<br />
+				<label for="midVar1">Mid Var 1</label>
+				<input type="text" id="midVar1" data-bind="value: midVar1"/>
+				<br />
+				<label for="midVar2">Mid Var 2</label>
+				<input type="text" id="midVar2" data-bind="value: midVar2"/>
+				<br />
+				<label for="bottomVar1">Bottom Var 1</label>
+				<input type="text" id="bottomVar1" data-bind="value: bottomVar1"/>
+				<br />
+
+			</form>
+
+			<script type="text/coffeescript" charset="utf-8">
+				@test = 100
+				class c6vTest extends Argure.Model
+					constructor: () ->
+						super()
+					
+					@observe 'topVar1'
+					@observe 'topVar2'
+					@observe 'topVar3'
+					@observe 'midVar1'
+					@observe 'midVar2'
+					@observe 'bottomVar1'
+					
+					@relate (c) ->
+						c.method 'midVar1 = topVar1 *1 + topVar2 *1'
+						c.method 'topVar1 = midVar1 - topVar2'
+						c.method 'topVar2 = midVar1 - topVar1'
+					@relate (c) ->
+						c.method 'midVar2 = topVar2 *1 + topVar3 *1'
+						c.method 'topVar2 = midVar2 - topVar3'
+						c.method 'topVar3 = midVar2 - topVar2'
+					@relate (c) ->
+						c.method 'bottomVar1 = midVar1 *1 + midVar2 *1'
+						c.method 'midVar1 = bottomVar1 - midVar2'
+						c.method 'midVar2 = bottomVar1 - midVar1'
+				this.c6vTest = new c6vTest()
+				ko.applyBindings(this.c6vTest)
+			</script>
+							
+		</div>
+	</body>
+</html>
