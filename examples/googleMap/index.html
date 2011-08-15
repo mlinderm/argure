@@ -115,8 +115,13 @@
 
     <body onload="initialize()">
         <h1>
-        Camera Demo 
+        Google Map Demo 
         </h1>
+		<p> Use mouse to drag the map, use wheel to zoom in/out or directly modify the value on the text box.</p>
+		<p> This map is continuous horizontally, but has boundaries vertically. </p> 
+		<p> If you try to move out of the boundary, it will automatically keep you inside.</p>
+		<p> And if you keep zooming out and thus cause the map out of boundary, it will adjust the center automatically.</p>
+		<p> When you zoom in again, it will bring you back to the original center. </p>
         <p id="cameraArgure">
             <form id="camera">
                 <p>Center Longitude: <span data-bind="text: focusX"></span>

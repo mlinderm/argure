@@ -64,10 +64,13 @@ apply_deltaBlue_solver = ->
 		return observable
 	
 	@build_constraint_callback ?= (c)->
+		c.currentMethod = undefined
+		c.cycleDetectionNum = 0
 		for method in c.methods
 			@[method.output].constraints?(c)
 			@[i].constraints?(c) for i in method.inputs
-		null
+		c
+	
 	@_delayed ->
 		_cycleNum = 0
 		@cycleNum = (toInc)->

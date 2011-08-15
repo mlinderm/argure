@@ -1,61 +1,61 @@
 <!DOCTYPE html>
 <html>
 	<head>
-		<title> Argure Demo: Vizmapper </title>
+		<title>Argure Demo: Vizmapper</title>
+		<link href="../../public/stylesheets/ui.core.css" media="screen, projection" rel="stylesheet" type="text/css" /> 
+		<link href="../../public/stylesheets/ui.form.css" media="screen, projection" rel="stylesheet" type="text/css" /> 
 		<script src="../../spec/vendor/jquery-1.6.js"></script>
 		<script src="../../spec/vendor/jquery.tmpl.js"></script>
 		<script src="../../spec/vendor/knockout-1.2.1.debug.js"></script>
 		<script src="../../public/javascripts/argure.js"></script>
 	</head>
 	<body>
-		<h1>
-		Vizmapper
-		</h1>
-		<div id="resizeArgure">
-			<form id="resize">
+		<form id="vizmapper" class='ui-widget'>
+			<fieldset>
+				<legend>Setup Visual Mapping</legend>
+				<div class='ui-horizontal'>
+					<label for="min">Size Low</label>
+					<input type="text" id="min" data-bind="value: min"/>
+					<br />
+					<label for="max">Size High</label>
+					<input type="text" id="max" data-bind="value: max"/>
+					<br />
+					<label for="preserveValue">Preserve Value</label>
+					<input type="checkbox" id="preserveValue" data-bind="checked: preserveValue" />
+				</div>
+				<div class='ui-horizontal'>
+					<label>Select Input File</label>
+					<select data-bind='options: inputFile, optionsText: "name", value: selectedInputFile'></select>
+				</div>
+			</fieldset>
+		</form>
 
-
-				<label for="min">Size Low</label>
-				<input type="text" id="min" data-bind="value: min"/>
-				<br />
-				<label for="max">Size High</label>
-				<input type="text" id="max" data-bind="value: max"/>
-				<br />
-				<label for="preserveValue">Preserve Value</label>
-				<input type="checkbox" id="preserveValue" data-bind="checked: preserveValue" />
-				<br />
-				<label>Select Input File
-				<select data-bind='options: inputFile, optionsText: "name", value: selectedInputFile'></select>
-
-
-
-
-			</form>
-
-			<script type="text/coffeescript" charset="utf-8">
-				class Vizmapper extends Argure.Model
-					constructor: (@inputFile) ->
-						super()
-					
-					@observe 'selectedInputFile'
-					@observe 'min', initial : 0
-					@observe 'max', initial : 30
-					@observe 'preserveValue', initial: false
-					
-					@relate (c) ->
-						c.method min : ['selectedInputFile','preserveValue','min'], (s,p,m) -> if p then m else s.min
-					@relate (c) ->
-						c.method max : ['selectedInputFile','preserveValue','max'], (s,p,m) -> if p then m else s.max
-					@preCall 'min', ->@preserveValue(true) 
-					@preCall 'max', ->@preserveValue(true) 
-				this.vizmapper = new Vizmapper([
-					{name: "f1", min: 20, max: 50}
-					{name: "f2", min: -20, max: 60}
-					{name: "f3", min: 0, max: 100}
-				])
-				ko.applyBindings(this.vizmapper)
-			</script>
+		<script type="text/coffeescript" charset="utf-8">
+			class Vizmapper extends Argure.Model
+				constructor: (@inputFile) ->
+					super()
+				
+				@observe 'selectedInputFile'
+				@observe 'min', initial : 0
+				@observe 'max', initial : 30
+				@observe 'preserveValue', initial: false
+				
+				@relate (c) ->
+					c.when('!preserveValue').method 'min = selectedInputFile.min'
+				@relate (c) ->
+					c.when('!preserveValue').method 'max = selectedInputFile.max'
+	
+				@preCall 'min', -> @preserveValue(true) 
+				@preCall 'max', -> @preserveValue(true) 
+			# / Vizmapper	
+				
+			this.vizmapper = new Vizmapper([
+				{name: "f1", min: 20, max: 50}
+				{name: "f2", min: -20, max: 60}
+				{name: "f3", min: 0, max: 100}
+			])
+			ko.applyBindings(this.vizmapper)
+		</script>
 							
-		</div>
 	</body>
 </html>

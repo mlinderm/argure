@@ -14,10 +14,7 @@
 		<div id="cycleTest">
 			<form id="cycleTest">
 				<p>Edit Top Var and Bottom Var consecutively in any order to produce a cycle</p>
-				<p>Test: <span data-bind="text: test"></span></p>
-
-
-				<label for="topVar">Top Var</label>
+				<label for="topVar">Top Value</label>
 				<input type="text" id="topVar" data-bind="value: topVar"/>
 				<br />
 				<label for="leftVar">Left Var</label>
@@ -29,11 +26,9 @@
 				<label for="bottomVar">Bottom Var</label>
 				<input type="text" id="bottomVar" data-bind="value: bottomVar"/>
 				<br />
-
 			</form>
 
 			<script type="text/coffeescript" charset="utf-8">
-				@test = 100
 				class c4vTest extends Argure.Model
 					constructor: () ->
 						super()
@@ -51,6 +46,7 @@
 						c.method 'bottomVar = leftVar*2 + rightVar*2'
 						c.method 'leftVar = bottomVar/2 - rightVar'
 						c.method 'rightVar = bottomVar/2 - leftVar'
+						
 				this.c4vTest = new c4vTest()
 				ko.applyBindings(this.c4vTest)
 			</script>
