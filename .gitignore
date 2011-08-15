@@ -3,3 +3,4 @@ build
 *.swp
 .sass-cache
 *~
+Gemfile.lock
