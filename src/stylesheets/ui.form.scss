@@ -1,35 +1,42 @@
+@import "blueprint/typography";
 @import "compass/typography/lists/bullets";
+@import "blueprint/grid";
 @import "blueprint/form";
 
-$input-width: 300px;
-$textarea-width: $input-width;
+$input-width:     90%;
+$textarea-width:  $input-width;
 $textarea-height: 250px;
-$select-width: 200px; 
-
-@mixin ui-form-sizes {
-  @include blueprint-form-sizes($input-width, $textarea-width, $textarea-height);
-	select {
-		width: $select-width;
-	} 
-}
-
+$select-width:    $input-width; 
 
 .ui-form {
 	@include blueprint-form-layout;
-  @include blueprint-form-borders;
-  @include ui-form-sizes;
+	.field {
+		margin-top: .5em;
+		margin-bottom: .5em;
+		padding: 0 5px;
+		@include clearfix;
+	}
+				
+	@include blueprint-form-sizes($input-width, $textarea-width, $textarea-height);
+	select {
+		width: $select-width;
+	}
 
 	label {
 		display: block;
 	}
+	label.side {
+		display: inline-block;
+		width: span(3);
+	}
 
 	ul {
 		@include no-bullets;
+		padding-left: 0;
 	}
 
 	.argure-error-message {
 		nl {
-			margin: 0;
 			li {
 				list-style-type: decimal;
 			}

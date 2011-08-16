@@ -39,9 +39,7 @@ arguments),this._chain)}});j.prototype.chain=function(){this._chain=!0;return th
   var __bind = function(fn, me){ return function(){ return fn.apply(me, arguments); }; };
   apply_knockout_solver = function() {
     var _ref, _ref2;
-        if ((_ref = this.build_observable_callback) != null) {
-      _ref;
-    } else {
+    if ((_ref = this.build_observable_callback) == null) {
       this.build_observable_callback = function(name, observable_kind, initial_value) {
         var argure_observable, state;
         state = observable_kind(initial_value);
@@ -59,7 +57,7 @@ arguments),this._chain)}});j.prototype.chain=function(){this._chain=!0;return th
         argure_observable.state = state;
         return argure_observable;
       };
-    };
+    }
     return (_ref2 = this.build_constraint_callback) != null ? _ref2 : this.build_constraint_callback = function(constraint) {
       var method, _i, _len, _ref3, _results;
       _ref3 = constraint.methods;
@@ -88,9 +86,7 @@ arguments),this._chain)}});j.prototype.chain=function(){this._chain=!0;return th
   };
   apply_deltaBlue_solver = function() {
     var _ref, _ref2;
-        if ((_ref = this.build_observable_callback) != null) {
-      _ref;
-    } else {
+    if ((_ref = this.build_observable_callback) == null) {
       this.build_observable_callback = function(name, observable_kind, initial_value) {
         var observable, priority, state, wkStrength, _constraints, _postCallback, _preCallback;
         state = observable_kind(initial_value);
@@ -153,10 +149,8 @@ arguments),this._chain)}});j.prototype.chain=function(){this._chain=!0;return th
         };
         return observable;
       };
-    };
-        if ((_ref2 = this.build_constraint_callback) != null) {
-      _ref2;
-    } else {
+    }
+    if ((_ref2 = this.build_constraint_callback) == null) {
       this.build_constraint_callback = function(c) {
         var i, method, _base, _base2, _i, _j, _len, _len2, _ref3, _ref4;
         c.currentMethod = void 0;
@@ -177,7 +171,7 @@ arguments),this._chain)}});j.prototype.chain=function(){this._chain=!0;return th
         }
         return c;
       };
-    };
+    }
     this._delayed(function() {
       var _cycleNum;
       _cycleNum = 0;
@@ -337,9 +331,7 @@ arguments),this._chain)}});j.prototype.chain=function(){this._chain=!0;return th
   };
   apply_validate_extensions = function() {
     var _base, _ref, _ref2, _ref3, _ref4;
-        if ((_ref = (_base = ko.bindingHandlers).validate) != null) {
-      _ref;
-    } else {
+    if ((_ref = (_base = ko.bindingHandlers).validate) == null) {
       _base.validate = {
         update: function(element, valueAccessor, allBindingsAccessor, viewModel) {
           var msg, value;
@@ -364,10 +356,8 @@ arguments),this._chain)}});j.prototype.chain=function(){this._chain=!0;return th
           }), allBindingsAccessor, viewModel);
         }
       };
-    };
-        if ((_ref2 = this.validatePresenceOf) != null) {
-      _ref2;
-    } else {
+    }
+    if ((_ref2 = this.validatePresenceOf) == null) {
       this.validatePresenceOf = function(name, options) {
         if (options == null) {
           options = {};
@@ -379,10 +369,8 @@ arguments),this._chain)}});j.prototype.chain=function(){this._chain=!0;return th
         }, "" + name + " cannot be blank");
         return null;
       };
-    };
-        if ((_ref3 = this.validateNumericalityOf) != null) {
-      _ref3;
-    } else {
+    }
+    if ((_ref3 = this.validateNumericalityOf) == null) {
       this.validateNumericalityOf = function(name, options) {
         var maximum, minimum, _ref4, _ref5, _ref6;
         if (options == null) {
@@ -396,12 +384,10 @@ arguments),this._chain)}});j.prototype.chain=function(){this._chain=!0;return th
         }, "" + name + " must be a number in the range " + minimum + ".." + maximum);
         return null;
       };
-    };
+    }
     return (_ref4 = this.validateLengthOf) != null ? _ref4 : this.validateLengthOf = function(name, options) {
       var maximum, minimum, _ref5, _ref6, _ref7;
-      if (options == null) {
-        options = {};
-      }
+      if (!options == null) {}
       _ref7 = [(_ref5 = options.minimum) != null ? _ref5 : -Infinity, (_ref6 = options.maximum) != null ? _ref6 : Infinity], minimum = _ref7[0], maximum = _ref7[1];
       this.validate(name, function() {
         var _ref8;
@@ -412,9 +398,7 @@ arguments),this._chain)}});j.prototype.chain=function(){this._chain=!0;return th
   };
   apply_set_extensions = function() {
     var _base, _base2, _ref, _ref2, _ref3;
-        if ((_ref = this.collectionMultiSelect) != null) {
-      _ref;
-    } else {
+    if ((_ref = this.collectionMultiSelect) == null) {
       this.collectionMultiSelect = function(name, options) {
         var max, min, _ref2, _ref3, _ref4, _ref5;
         if (options == null) {
@@ -469,10 +453,8 @@ arguments),this._chain)}});j.prototype.chain=function(){this._chain=!0;return th
           }
         });
       };
-    };
-        if ((_ref2 = (_base = ko.bindingHandlers).collectionMultiSelect) != null) {
-      _ref2;
-    } else {
+    }
+    if ((_ref2 = (_base = ko.bindingHandlers).collectionMultiSelect) == null) {
       _base.collectionMultiSelect = {
         init: function(element, valueAccessor, allBindingsAccessor, viewModel) {
           ko.bindingHandlers.selectedOptions.init(element, (function() {
@@ -490,7 +472,7 @@ arguments),this._chain)}});j.prototype.chain=function(){this._chain=!0;return th
           return null;
         }
       };
-    };
+    }
     return (_ref3 = (_base2 = ko.bindingHandlers).collectionTemplate) != null ? _ref3 : _base2.collectionTemplate = {
       update: function(element, valueAccessor, allBindingsAccessor, viewModel) {
         var value;
@@ -767,11 +749,9 @@ arguments),this._chain)}});j.prototype.chain=function(){this._chain=!0;return th
     }
     Model._delayed = function(fn) {
       var _ref;
-            if ((_ref = this._delays) != null) {
-        _ref;
-      } else {
+      if ((_ref = this._delays) == null) {
         this._delays = [];
-      };
+      }
       return this._delays.push(fn);
     };
     Argure.Extensions.DeltaBlue.call(Model);
@@ -787,11 +767,9 @@ arguments),this._chain)}});j.prototype.chain=function(){this._chain=!0;return th
       if (options == null) {
         options = void 0;
       }
-            if ((_ref = this.observables) != null) {
-        _ref;
-      } else {
+      if ((_ref = this.observables) == null) {
         this.observables = {};
-      };
+      }
       if (this.observables[name] != null) {
         throw new Error("Observable " + name + " already exists");
       }
@@ -802,11 +780,9 @@ arguments),this._chain)}});j.prototype.chain=function(){this._chain=!0;return th
       if (options == null) {
         options = void 0;
       }
-            if ((_ref = this.collections) != null) {
-        _ref;
-      } else {
+      if ((_ref = this.collections) == null) {
         this.collections = {};
-      };
+      }
       if (this.collections[name] != null) {
         throw new Error("Collection " + name + " already exists");
       }
@@ -814,11 +790,9 @@ arguments),this._chain)}});j.prototype.chain=function(){this._chain=!0;return th
     };
     Model.relate = function(methods) {
       var _ref;
-            if ((_ref = this.relations) != null) {
-        _ref;
-      } else {
+      if ((_ref = this.relations) == null) {
         this.relations = [];
-      };
+      }
       if (typeof methods !== "function") {
         throw new Error("You must specify constraint methods");
       }

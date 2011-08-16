@@ -12,27 +12,21 @@
 .ui-form textarea { margin: 0.5em 0; padding: 5px; }
 /* line 30, ../../../../../.rvm/gems/ruby-1.9.2-p180@argure/gems/compass-0.11.5/frameworks/blueprint/stylesheets/blueprint/_form.scss */
 .ui-form select { margin: 0.5em 0; }
-/* line 55, ../../../../../.rvm/gems/ruby-1.9.2-p180@argure/gems/compass-0.11.5/frameworks/blueprint/stylesheets/blueprint/_form.scss */
-.ui-form fieldset { border: 1px solid #cccccc; }
-/* line 58, ../../../../../.rvm/gems/ruby-1.9.2-p180@argure/gems/compass-0.11.5/frameworks/blueprint/stylesheets/blueprint/_form.scss */
-.ui-form input.text, .ui-form input.title, .ui-form input[type=email], .ui-form input[type=text], .ui-form input[type=password], .ui-form textarea { background-color: #fff; border: 1px solid #bbbbbb; }
-/* line 61, ../../../../../.rvm/gems/ruby-1.9.2-p180@argure/gems/compass-0.11.5/frameworks/blueprint/stylesheets/blueprint/_form.scss */
-.ui-form input.text:focus, .ui-form input.title:focus, .ui-form input[type=email]:focus, .ui-form input[type=text]:focus, .ui-form input[type=password]:focus, .ui-form textarea:focus { border-color: #666666; }
-/* line 65, ../../../../../.rvm/gems/ruby-1.9.2-p180@argure/gems/compass-0.11.5/frameworks/blueprint/stylesheets/blueprint/_form.scss */
-.ui-form select { background-color: #fff; border-width: 1px; border-style: solid; }
+/* line 13, ../../src/stylesheets/ui.form.scss */
+.ui-form .field { margin-top: .5em; margin-bottom: .5em; padding: 0 5px; overflow: hidden; *zoom: 1; }
 /* line 44, ../../../../../.rvm/gems/ruby-1.9.2-p180@argure/gems/compass-0.11.5/frameworks/blueprint/stylesheets/blueprint/_form.scss */
-.ui-form input.text, .ui-form input.title, .ui-form input[type=email], .ui-form input[type=text], .ui-form input[type=password] { width: 300px; }
+.ui-form input.text, .ui-form input.title, .ui-form input[type=email], .ui-form input[type=text], .ui-form input[type=password] { width: 90%; }
 /* line 46, ../../../../../.rvm/gems/ruby-1.9.2-p180@argure/gems/compass-0.11.5/frameworks/blueprint/stylesheets/blueprint/_form.scss */
-.ui-form textarea { width: 300px; height: 250px; }
-/* line 11, ../../src/stylesheets/ui.form.scss */
-.ui-form select { width: 200px; }
-/* line 22, ../../src/stylesheets/ui.form.scss */
+.ui-form textarea { width: 90%; height: 250px; }
+/* line 21, ../../src/stylesheets/ui.form.scss */
+.ui-form select { width: 90%; }
+/* line 25, ../../src/stylesheets/ui.form.scss */
 .ui-form label { display: block; }
-/* line 26, ../../src/stylesheets/ui.form.scss */
-.ui-form ul { list-style: none; }
+/* line 28, ../../src/stylesheets/ui.form.scss */
+.ui-form label.side { display: inline-block; width: 110px; }
+/* line 33, ../../src/stylesheets/ui.form.scss */
+.ui-form ul { list-style: none; padding-left: 0; }
 /* line 11, ../../../../../.rvm/gems/ruby-1.9.2-p180@argure/gems/compass-0.11.5/frameworks/compass/stylesheets/compass/typography/lists/_bullets.scss */
 .ui-form ul li { list-style-image: none; list-style-type: none; margin-left: 0px; }
-/* line 31, ../../src/stylesheets/ui.form.scss */
-.ui-form .argure-error-message nl { margin: 0; }
-/* line 33, ../../src/stylesheets/ui.form.scss */
+/* line 40, ../../src/stylesheets/ui.form.scss */
 .ui-form .argure-error-message nl li { list-style-type: decimal; }

@@ -10,34 +10,42 @@
 		<script src="../../public/javascripts/argure.js"></script>
 	</head>
 	<body>
-		<form id="resize" data-bind="submit: do_submit" class='ui-widget'>
-			<fieldset>
-				<legend>Resize Image</legend>
-				<p>Initial Height: <span data-bind="text: initHeight"></span></p>
-				<p>Initial Width: <span data-bind="text: initWidth"></span></p>
-				<div data-bind="validate: absHeight">
+		<div class='ui-widget container span-12'>
+			<form id="resize" data-bind="submit: do_submit" class='ui-form'>
+				<header id="header" class="info">
+					<h3>Resize Image</h3>
+				</header>
+				<div class="field">
+					<label for="initHeight" class="side">Initial Height</label>
+					<span id="initHeight" data-bind="text: initHeight" class="constant"></span>
+				</div>
+				<div class="field">
+					<label for="initWidth" class="side">Initial Width</label>
+					<span id="initWidth" data-bind="text: initWidth" class="constant"></span>
+				</div>
+				<div data-bind="validate: absHeight" class="field">
 					<label for="absHeight">Absolute Height</label>
 					<input type="text" id="absHeight" data-bind="value: absHeight"/>
 				</div>
-				<div data-bind="validate: relHeight">
+				<div data-bind="validate: relHeight" class="field">
 					<label for="relHeight">Relative Height</label>
 					<input type="text" id="relHeight" data-bind="value: relHeight"/>
 				</div>
-				<div data-bind="validate: absWidth">
+				<div data-bind="validate: absWidth" class="field">
 					<label for="absWidth">Absolute Width</label>
 					<input type="text" id="absWidth" data-bind="value: absWidth"/>
 				</div>
-				<div data-bind="validate: relWidth">
+				<div data-bind="validate: relWidth" class="field">
 					<label for="relWidth">Relative Width</label>
 					<input type="text" id="relWidth" data-bind="value: relWidth"/>
 				</div>
-				<div>
-					<label for="ratio">Lock Ratio</label>
+				<div class="field">
+					<label for="ratio" class="side">Lock Ratio</label>
 					<input type="checkbox" id="ratio" data-bind="checked: ratio"/>
 				</div>
 				<button type="submit">Resize</button>
-			</fieldset>		
-		</form>
+			</form>
+		</div>
 
 		<script type="text/coffeescript" charset="utf-8">
 			class Resizer extends Argure.Model

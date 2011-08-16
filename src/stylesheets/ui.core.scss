@@ -4,10 +4,12 @@
  * <link href="/stylesheets/core.css" media="screen, projection" rel="stylesheet" type="text/css" /> */
 
 @import "compass/css3/inline-block";
+
+@import "blueprint/grid";
 @import "blueprint/colors";
 @import "blueprint/typography";
 
-$horizontal-gutter: 10px;
+@include blueprint-grid;
 
 .ui-widget { 
 	@include blueprint-typography(true);
@@ -16,17 +18,9 @@ $horizontal-gutter: 10px;
 		border: 1px solid $error-border-color; 
 		background: $error-bg-color;
 		color: $error-color; 
-	
 		a {
 			color: $error-color;
 		}
 	}
 	
-	.ui-horizontal {
-		@include inline-block;
-		margin-right: $horizontal-gutter;
-	}
-	.ui-horizontal-last {
-		@include inline-block;
-	}
 }

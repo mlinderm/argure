@@ -14,45 +14,50 @@
 			<!-- "view" for created panels -->
 			<script id="panelsTemplate" type="text/x-jQuery-tmpl" charset="utf-8">
 				<li>
-					<fieldset>
-						<legend>Define Analysis Panel</legend>
-						<div class="ui-horizontal">
+					<div class="column last span-22">	
+						<div class="field column span-6">
 							<label for="panelFiles${$item.uqId}">Select Panel Files</label>
 							<select id="panelFiles${$item.uqId}" data-bind='collectionMultiSelect: panelFiles, optionsText: "name"' multiple="multiple"></select>
 						</div>
-						<div class="ui-horizontal">
+						<div class="field column span-6">
 							<label for="refFiles${$item.uqId}">Select Reference Files</label>
 							<select id="refFiles${$item.uqId}" data-bind='collectionMultiSelect: refFiles, optionsText: "name"' multiple="multiple"></select>
 						</div>	
-						<div class="ui-horizontal">
+						<div class="field column span-6">
 							<label for="foldParams${$item.uqId}">Select Fold Change Parameters</label>
 							<select id="foldParams${$item.uqId}" data-bind='collectionMultiSelect: foldParams' multiple="multiple"></select>
 						</div>	
 						<button data-bind="click: function() { $item.parentCollection.remove(this); }">Delete Panel</button>
-					</fieldset>
+					</div>
 				</li>
 			</script>
 
 			<script id="spadeTemplate" type="text/x-jQuery-tmpl" charset="utf-8">	
 				<form class="ui-form" data-bind="submit: do_submit">
-					<fieldset>
-						<legend>Setup SPADE Analysis</legend>
-						<div data-bind="validate: files_slct" class="ui-horizontal">
+					<header class="info">
+						<h3>Setup SPADE Analysis</h3>
+					</header>
+					<div data-bind='validate: panels' class="field column last span-22">
+						<div data-bind="validate: files_slct" class="field column span-6">
 							<label for='files'>Select Files for Analysis</label>
 							<select id='files' data-bind='collectionMultiSelect: files, optionsText: "name"' multiple='multiple'></select>
 						</div>
-						<div data-bind="validate: clusterParams_slct" class="ui-horizontal-last">
+						<div data-bind="validate: clusterParams_slct" class="field column last span-6">
 							<label for='clusterParams'>Select Clustering Parameters</label>
 							<select id='clusterParams' data-bind='collectionMultiSelect: clusterParams' multiple='multiple'></select>
 						</div>
-						<ul id='panels' data-bind='collectionTemplate: panels, validate: panels'></ul>
+					</div>
+					<div data-bind='validate: panels' class="field column last span-22">
+						<ul id='panels' data-bind='collectionTemplate: panels'></ul>
+					</div>
+					<div class="column last span-24">
 						<button data-bind="click: create_panel">Create Another Panel</button>
 						<button type="submit">Submit</button>
-					</fieldset>
+					</div>
 				</form>
 			</script>
 
-			<div id="spade_main" data-bind='template: "spadeTemplate"' class='ui-widget'></div>
+			<div id="spade_main" data-bind='template: "spadeTemplate"' class='ui-widget container'></div>
 
 			<script type="text/coffeescript" charset="utf-8">
 	
