@@ -58,31 +58,37 @@ arguments),this._chain)}});j.prototype.chain=function(){this._chain=!0;return th
         return argure_observable;
       };
     }
-    return (_ref2 = this.build_constraint_callback) != null ? _ref2 : this.build_constraint_callback = function(constraint) {
-      var method, _i, _len, _ref3, _results;
-      _ref3 = constraint.methods;
-      _results = [];
-      for (_i = 0, _len = _ref3.length; _i < _len; _i++) {
-        method = _ref3[_i];
-        _results.push(__bind(function(method) {
+    if ((_ref2 = this.build_constraint_callback) == null) {
+      this.build_constraint_callback = function(constraint) {
+        var method, _fn, _i, _len, _ref3;
+        _ref3 = constraint.methods;
+        _fn = __bind(function(method) {
           return ko.dependentObservable(function() {
-            var name;
-            this[method.output].state(method.body.apply(this, (function() {
-              var _j, _len2, _ref4, _results2;
+            var i, name;
+            i = (function() {
+              var _j, _len2, _ref4, _results;
               _ref4 = method.inputs;
-              _results2 = [];
+              _results = [];
               for (_j = 0, _len2 = _ref4.length; _j < _len2; _j++) {
                 name = _ref4[_j];
-                _results2.push(ko.utils.unwrapObservable(this[name]));
+                _results.push(ko.utils.unwrapObservable(this[name]));
               }
-              return _results2;
-            }).call(this)));
+              return _results;
+            }).call(this);
+            if (method.condition === void 0 || method.condition.apply(this, i)) {
+              this[method.output].state(method.body.apply(this, i));
+            }
             return null;
           }, this);
-        }, this)(method));
-      }
-      return _results;
-    };
+        }, this);
+        for (_i = 0, _len = _ref3.length; _i < _len; _i++) {
+          method = _ref3[_i];
+          _fn(method);
+        }
+        return constraint;
+      };
+    }
+    return null;
   };
   apply_deltaBlue_solver = function() {
     var _ref, _ref2;

@@ -17,11 +17,15 @@ apply_knockout_solver = ->
 	@build_constraint_callback ?= (constraint) ->
 		for method in constraint.methods
 			do (method) =>
-				ko.dependentObservable ->
-					@[method.output].state method.body.apply(@, (ko.utils.unwrapObservable(@[name]) for name in method.inputs))
+				return ko.dependentObservable ->
+					i = (ko.utils.unwrapObservable(@[name]) for name in method.inputs)
+					if method.condition == undefined or method.condition.apply(@, i)
+						@[method.output].state(method.body.apply(@, i))
 					null
 				, @
-
+		constraint
+	
+	null
 
 #
 # DeltaBlue multi-way constraint solver 
