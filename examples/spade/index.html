@@ -98,7 +98,8 @@
 							
 					@collection 'panels', initial: []
 					@validate 'panels', ->
-						@panels().length <= 1 || (_.intersect.apply _, (p.panelFiles_slct() for p in @panels())).length == 0
+						@panels().length <= 1 || 
+						(_.intersect.apply _, (p.panelFiles_slct() for p in @panels())).length == 0
 					, "Panel files must be mutually exclusive"
 
 				# /Spade

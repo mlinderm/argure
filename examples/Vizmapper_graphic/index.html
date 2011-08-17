@@ -39,6 +39,14 @@
 						@boundary = @paper.path("M 50 50 l 0 200 l 200 0 l 0 -200 z")
 						@boundary.attr({stroke: '#000', 'stroke-width': 2})
 						@curve = @paper.path("M 50 "+(250-@minY()*2)+" l "+@minX()*2+" 0 l "+2*(@maxX()-@minX())+" "+2*(@minY()-@maxY())+" l "+2*(100-@maxX())+" 0")
+						@paper.text(30,270,"0");
+						@paper.text(270,270,"100");
+						@paper.text(25,40,"100");
+						@paper.text(@minX()*2+55,260,"X min");
+						@paper.text(@maxX()*2+55,260,"X max");
+						@paper.text(30,250 - @minY()*2,"Y min");
+						@paper.text(30,250 - @maxY()*2,"Y max");
+
 			paper = new Raphael(document.getElementById('canvas_container'), 500, 500)
 			this.viz = new Vizmapper([
 				{name: "f1", minX: 20, maxX: 50, minY: 40, maxY: 80}
@@ -55,6 +63,10 @@
 		Vizmapper
 		</h1>
 		<div id="resizeArgure">
+			<p> 1. Each input file has its own default parameters, change input file will also change the default parameter.<br>
+		    	2. Select preserve value to keep current parameters.<br>
+		     	3. You can also overwrite value on the textbox to change parameters, preserve value will be automatic selected to keep the new parameters.
+				<br><br></p>
 			<form id="resize">
 				<label for="minX">X min</label>
 				<input type="text" id="minX" data-bind="value: minX"/>
@@ -75,6 +87,6 @@
 				<select data-bind='options: inputFile, optionsText: "name", value: selectedInputFile'></select>
 			</form>
 		</div>
-		<div id="canvas_container"></div>  
+		<div id="canvas_container",style="width : 500px; height: 500px;"></div>
 	</body>
 </html>

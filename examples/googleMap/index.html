@@ -31,6 +31,7 @@
                 @observe 'width', initial: 0
                 @observe 'height', initial: 0
                 @observe 'ratio'
+                
                 @relate (c) ->
                     c.method 'maxX=(centerX*1 + 0.5*width)'
                     c.method 'centerX=(maxX - 0.5*width)'
@@ -48,26 +49,19 @@
                     c.method 'centerX = focusX'
                 @relate (c) ->
                     c.method 'focusY = centerY'
-                    c.method    '''
-                                        centerY = if focusY + 0.5 * height > 80
-                                            80 - 0.5 * height
-                                        else if focusY - 0.5 * height < -80  
-                                            -80 + 0.5 * height
-                                        else
-                                            focusY
-                                            '''
-                @postCall 'minX', ->
-                    outCenter = new google.maps.LatLng(@centerY(),@centerX())
-                    @gMap.setCenter(outCenter)
-                @postCall 'maxX', ->
-                    outCenter = new google.maps.LatLng(@centerY(),@centerX())
-                    @gMap.setCenter(outCenter)
-                @postCall 'minY', ->
-                    outCenter = new google.maps.LatLng(@centerY(),@centerX())
-                    @gMap.setCenter(outCenter)
-                @postCall 'maxY', ->
-                    outCenter = new google.maps.LatLng(@centerY(),@centerX())
-                    @gMap.setCenter(outCenter)
+                    c.method '''
+                             centerY = if focusY + 0.5 * height > 80
+                                  80 - 0.5 * height
+                             else if focusY - 0.5 * height < -80  
+                                  -80 + 0.5 * height
+                             else
+                                 focusY
+                             '''
+                
+                for name in ['minX', 'maxX', 'minY', 'maxY']
+                  @postCall name, ->
+                      outCenter = new google.maps.LatLng(@centerY(),@centerX())
+                      @gMap.setCenter(outCenter)
 
 
 
@@ -75,13 +69,13 @@
             # /Camera
             this.initialize = () ->
                 myOptions=
-                    zoom: 4
+                    zoom: 6
                     center: new google.maps.LatLng(23, 121)
                     disableDefaultUI: true
                     mapTypeId: google.maps.MapTypeId.ROADMAP
                 map = new google.maps.Map(document.getElementById("map_canvas"),myOptions)
                 
-                camera = new Camera(23,121,4,map)
+                camera = new Camera(23,121,6,map)
                 ko.applyBindings(camera)       
                 
                 google.maps.event.addListenerOnce map, 'idle', ()->
@@ -117,11 +111,6 @@
         <h1>
         Google Map Demo 
         </h1>
-		<p> Use mouse to drag the map, use wheel to zoom in/out or directly modify the value on the text box.</p>
-		<p> This map is continuous horizontally, but has boundaries vertically. </p> 
-		<p> If you try to move out of the boundary, it will automatically keep you inside.</p>
-		<p> And if you keep zooming out and thus cause the map out of boundary, it will adjust the center automatically.</p>
-		<p> When you zoom in again, it will bring you back to the original center. </p>
         <p id="cameraArgure">
             <form id="camera">
                 <p>Center Longitude: <span data-bind="text: focusX"></span>
@@ -131,7 +120,7 @@
              &nbsp Right: <input data-bind="value: maxX">
              &nbsp Top: <input data-bind="value: maxY">
              &nbsp Bottom: <input data-bind="value: minY"></p>
-                <br/><br/>
+                
                 
             </form>
 
@@ -139,5 +128,11 @@
         </p>
 
         <div id="map_canvas" style="width : 720px; height: 360px; border: 10px solid gray"></div>
+        
+        <p> 1. Use mouse to drag the map, use wheel to zoom in/out or directly modify the value on the text box.</br>
+            2. There are boundaries on top and bottom of the map, the system will keep you inside if you try to move out of the boundary.</br>
+            3. If you keep zooming out and cause the map out of boundary, the system will adjust the center automatically to keep in the boundary.</br>
+            &nbsp&nbsp And When you zoom in again, it will bring you back to the original center. 
+         </p>
     </body>
 </html>
