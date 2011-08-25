@@ -1,7 +1,7 @@
 Argure.js
 =========
 
-'''CoffeeScript
+'''coffeescript
 class ExtractOperandsVisitor extends ASTVisitor
 	constructor: ->
 		@operands = []
