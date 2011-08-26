@@ -7,7 +7,7 @@ This system is a JavaScript library designed for simplifying web-based user inte
 1.	Installation.
 To use our system, please download jquery-1.6.js, jquery.tmpl.js, knockout-1.2.1.debug.js, argure.js from our github repository, and just simply include them as script on your webpages.
 For example, 
-```HTML
+```html
 <script src="jquery-1.6.js"></script>
 <script src="jquery.tmpl.js"></script>
 <script src="knockout-1.2.1.debug.js"></script>
