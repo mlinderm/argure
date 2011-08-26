@@ -16,7 +16,9 @@ For example,
 ```
 
 2.	An introductory example. 
+
 Form: 	
+
 ```HTML
 <form id="Addition">
 	<p>A example that show how addition works. "A + B = C"</p>
@@ -31,7 +33,9 @@ Form:
 	<br />
 	</form>
 ```
+
 Script:
+
 ```CoffeeScript
 class Add extends Argure.Model
 	constructor: () ->
@@ -46,3 +50,4 @@ class Add extends Argure.Model
 this.Add = new Add()
 ko.applyBindings(this.Add)
 ```
+
