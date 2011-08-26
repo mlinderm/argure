@@ -19,7 +19,7 @@ For example,
 
 Form: 	
 
-```HTML
+```html
 <form id="Addition">
 	<p>A example that show how addition works. "A + B = C"</p>
 	<label for="A">A</label>
@@ -36,7 +36,7 @@ Form:
 
 Script:
 
-```CoffeeScript
+```coffeescript
 class Add extends Argure.Model
 	constructor: () ->
 		super()
