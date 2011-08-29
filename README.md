@@ -1,5 +1,7 @@
 This system is a JavaScript library designed for simplifying web-based user interface (UI) programming. We build this system on Knockout, also an open source JavaScript library, to simplify the connection of JavaScript variables and HTML form elements. The goal of this system is to provide a clean and easy-to-use interface for programmers to maintain complicated relationships between UI elements, and thus make UI programming easier.
 
+This system is a JavaScript library designed for simplifying web-based user interface (UI) programming. We build this system on Knockout, also an open source JavaScript library, to simplify the connection of JavaScript variables and HTML form elements. The goal of this system is to provide a clean and easy-to-use interface for programmers to maintain complicated relationships between UI elements, and thus make UI programming easier.
+
 1.	Installation.
 
 Please download jquery-1.6.js, jquery.tmpl.js, knockout-1.2.1.debug.js, argure.js from our github repository, and include them as script on your webpages.
@@ -18,33 +20,33 @@ Form:
 
 ```html
 <form id="Addition">
-				<p>A example that show how addition works. "A + B = C"</p>
-				<label for="A">A</label>
-				<input type="text" id="A" data-bind="value: A"/>
-				<br />
-				<label for="B">B</label>
-				<input type="text" id="B" data-bind="value: B"/>
-				<br />
-				<label for="C">C</label>
-				<input type="text" id="C" data-bind="value: C"/>
-				<br />
-			</form>
+	<p>A example that show how addition works. "A + B = C"</p>
+	<label for="A">A</label>
+	<input type="text" id="A" data-bind="value: A"/>
+	<br />
+	<label for="B">B</label>
+	<input type="text" id="B" data-bind="value: B"/>
+	<br />
+	<label for="C">C</label>
+	<input type="text" id="C" data-bind="value: C"/>
+	<br />
+	</form>
 ```
 Script:
 
 ```coffeescript
-	class Add extends Argure.Model
-					constructor: () ->
-						super()
-					@observe 'A'
-					@observe 'B'
-					@observe 'C'
-					@relate (c) ->
-						c.method 'C = A*1 + B*1'
-						c.method 'A = C - B'
-						c.method 'B = C - A'
-				this.Add = new Add()
-				ko.applyBindings(this.Add)
+class Add extends Argure.Model
+	constructor: () ->
+		super()
+	@observe 'A'
+	@observe 'B'
+	@observe 'C'
+	@relate (c) ->
+		c.method 'C = A*1 + B*1'
+		c.method 'A = C - B'
+		c.method 'B = C - A'
+this.Add = new Add()
+	ko.applyBindings(this.Add)
 ```
 
 To use our system, programmers should specify two different parts, HTML form and a script that specifies the model.
@@ -65,7 +67,7 @@ b.	Constraint:
 
 ```coffeescript 
 @relate (c) -> 
-	c.method relationship # unconditional method
+		c.method relationship # unconditional method
 c.when(condition).method relationship # conditional method
 ```
 
