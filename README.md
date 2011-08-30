@@ -132,7 +132,7 @@ Appendix: Prototypes of all the components in our system.
 Variables declaration
 
 ```coffeescript
-	@observe name, [initial_value]				#declare a single variable
+	@observe name, [initial_value]					#declare a single variable
 	@collectionMultiSelect name, [initial_value]	#declare a variable for a multiple selection list
 ```
 
@@ -144,7 +144,7 @@ Constraint declaration
 
 ```coffeescript
 	@relate(c) ->
-		c.method csm				 #uncondition CSM
+		c.method csm				 	#uncondition CSM
 		c.when(condition).method csm	 #conditional CSM
 ```
 
@@ -158,7 +158,7 @@ Validation declaration
 	@validation name, validator, message	#general validation
 	@validatePresenceOf name 				#validate if the variable is undefined
 	@validateNumericalityOf name, [option]	#validate if the variable is a number or between the range of option.minimum and option.maximum
-	@validateLengthOf name, [option]		# validate if the variable has a length between option.minimum and option.maximum
+	@validateLengthOf name, [option]		#validate if the variable has a length between option.minimum and option.maximum
 ```
 
 name: string, should be name of a variable
