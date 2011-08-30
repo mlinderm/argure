@@ -1,6 +1,8 @@
 This system is a JavaScript library designed for simplifying web-based user interface (UI) programming. We build this system on Knockout, also an open source JavaScript library, to simplify the connection of JavaScript variables and HTML form elements. The goal of this system is to provide a clean and easy-to-use interface for programmers to maintain complicated relationships between UI elements, and thus make UI programming easier.
 
-1.	Installation.
+
+
+1. Installation.
 
 Please download jquery-1.6.js, jquery.tmpl.js, knockout-1.2.1.debug.js, argure.js from our github repository, and include them as script on your webpages.
 
@@ -12,7 +14,9 @@ For example,
 <script src="knockout-1.2.1.debug.js"></script>
 <script src="javascripts/argure.js"></script>
 ```
-2.	An introductory example.
+
+
+2. An introductory example.
 
 Form: 	
 
@@ -95,7 +99,10 @@ We also implement other components that provide more specific operation. Please 
 
   In the following section, we will explain how our system works in more details.
 
-3.	The constraint system
+
+
+3. The constraint system
+
 We use multi-way, single-output constraint system to maintain relationships between variables. 
 
 When the UI start to execute, our system will generate a constraint graph corresponding to the variables and constraints declared by programmers. And while the UI is executing, our system will dynamically compute the value on UI elements by solving the constraint graph. 
@@ -105,6 +112,7 @@ Generally, multi-way constraint systems usually have multiple solutions, as ther
 To do this, we use a modified version of DeltaBlue algorithm as the constraint solver of our system. This algorithm is capable of generating the locally-predicate- better solution with time complexity linear to the number of variables. Please note that when inconsistencies exist and cause a direct cycle on the constraint graph, the algorithm will not solve it automatically, as we think it may be better to let user decide how to proceed. Instead, our system will halt and prompt a message when cycle is detected, and thus some of the relationships may be temporary unsatisfied. These relationships will be satisfied again after user decide how to deal with the inconsistency.
 
 You can find more details of our algorithm in Algorithm.pdf.
+
 
 4.	Reference
 
