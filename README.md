@@ -1,6 +1,4 @@
-This system is a JavaScript library designed for simplifying web-based user interface (UI) programming. We build this system on Knockout, also an open source JavaScript library, to simplify the connection of JavaScript variables and HTML form elements. The goal of this system is to provide a clean and easy-to-use interface for programmers to maintain complicated relationships between UI elements, and thus make UI programming easier.
-
-This system is a JavaScript library designed for simplifying web-based user interface (UI) programming. We build this system on Knockout, also an open source JavaScript library, to simplify the connection of JavaScript variables and HTML form elements. The goal of this system is to provide a clean and easy-to-use interface for programmers to maintain complicated relationships between UI elements, and thus make UI programming easier.
+ This system is a JavaScript library designed for simplifying web-based user interface (UI) programming. We build this system on Knockout, also an open source JavaScript library, to simplify the connection of JavaScript variables and HTML form elements. The goal of this system is to provide a clean and easy-to-use interface for programmers to maintain complicated relationships between UI elements, and thus make UI programming easier.
 
 1.	Installation.
 
@@ -63,6 +61,7 @@ a.	Variable:
 ```
 
 Programmers can specify the html form elements that should be maintained by system by declaring variable. Note that the names here should be the same as the ones specified on the html form.
+
 b.	Constraint:
 
 ```coffeescript 
@@ -72,6 +71,7 @@ c.when(condition).method relationship # conditional method
 ```
 
 Programmers can specify the relationships between variables by declaring constraints. Each constraint represent a relationship to be maintained, and should consist of one or more constraint satisfaction methods (CSM). It is programmer¡¦s responsibility to guarantee after executed one of these methods, the relationship will be satisfied. When the UI is running, our system will maintain the relationship by executing the most appropriate CSM for each constraint.
+
 c.	Validation: 
 
 ```coffeescript
@@ -79,6 +79,7 @@ c.	Validation:
 ```
 
 Programmers can trace the value of variables and provide corresponding message to users by specifying validations. When the return value of the validation function is false, our system will output the message on the user interface.
+
 d.	Callback function:
 
 ```coffeescript
@@ -120,5 +121,8 @@ Variables declaration
 ```coffeescript
 	@variable name
 	@
+
+
+
 
 
