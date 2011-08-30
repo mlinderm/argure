@@ -2,7 +2,7 @@ This system is a JavaScript library designed for simplifying web-based user inte
 
 
 
-Installation.
+1. Installation.
 
 Please download jquery-1.6.js, jquery.tmpl.js, knockout-1.2.1.debug.js, argure.js from our github repository, and include them as script on your webpages.
 
@@ -16,7 +16,7 @@ For example,
 ```
 
 
-An introductory example.
+2. An introductory example.
 
 Form: 	
 
@@ -58,7 +58,7 @@ The HTML form is responsible for the appearance of the UI, and should be specifi
 We suggest CoffeeScript as the language for specifying the model, as it is cleaner and easier to use. To specify the model, programmers should declare a class inheriting 
 Argure.Model, create a class instance, and pass it into ko.applyBindings. The content of the class may consists of some of the following components,
 
-a.	Variable:
+a. Variable:
 
 ```coffeescript
 @observable name
@@ -66,7 +66,7 @@ a.	Variable:
 
 Programmers can specify the html form elements that should be maintained by system by declaring variable. Note that the names here should be the same as the ones specified on the html form.
 
-b.	Constraint:
+b. Constraint:
 
 ```coffeescript 
 @relate (c) -> 
@@ -76,7 +76,7 @@ c.when(condition).method relationship # conditional method
 
 Programmers can specify the relationships between variables by declaring constraints. Each constraint represent a relationship to be maintained, and should consist of one or more constraint satisfaction methods (CSM). It is programmer¡¦s responsibility to guarantee after executed one of these methods, the relationship will be satisfied. When the UI is running, our system will maintain the relationship by executing the most appropriate CSM for each constraint.
 
-c.	Validation: 
+c. Validation: 
 
 ```coffeescript
 @validate name, validation function, message
@@ -84,7 +84,7 @@ c.	Validation:
 
 Programmers can trace the value of variables and provide corresponding message to users by specifying validations. When the return value of the validation function is false, our system will output the message on the user interface.
 
-d.	Callback function:
+d. Callback function:
 
 ```coffeescript
 @preCall name, function # pre-callback function
@@ -93,15 +93,15 @@ d.	Callback function:
 
 Programmers can specify additional actions when users change the value of a variable by specifying callback functions. Our system provides two types of callback functions, pre-callback functions that work before the automatic update of the system, and post-callback functions that work after the automatic update.
 
-e.	Other components:
+e. Other components:
 
 We also implement other components that provide more specific operation. Please check the appendix and examples for more details.
 
-  In the following section, we will explain how our system works in more details.
+In the following section, we will explain how our system works in more details.
 
 
 
-The constraint system
+3. The constraint system
 
 We use multi-way, single-output constraint system to maintain relationships between variables. 
 
@@ -114,7 +114,7 @@ To do this, we use a modified version of DeltaBlue algorithm as the constraint s
 You can find more details of our algorithm in Algorithm.pdf.
 
 
-Reference
+4. Reference
 
 To learn more about our algorithm and system, you may want to check the following links.
 
@@ -123,6 +123,60 @@ To learn more about our algorithm and system, you may want to check the followin
 [CoffeeScript]( http://jashkenas.github.com/coffee-script/)
 
 [DeltaBlue Algorithm]( http://dl.acm.org/citation.cfm?id=77531)
+
+
+5. Appendix: Prototypes of all the components in our system.
+
+**The parameter in [] in optional
+
+Variables declaration
+
+```coffeescript
+	@observe name, [initial_value]	#declare a single variable
+	@collectionMultiSelect name, [initial_value]	#declare a variable for a multiple selection list
+```
+
+name: string
+
+initial_value: type to be determined by programmer
+
+Constraint declaration
+
+```coffeescript
+	@relate(c) ->
+		c.method csm #uncondition CSM
+		c.when(condition).method csm #conditional CSM
+```
+
+csm: a string that contain an expression or an object that specify input, output and method directly
+
+condition: a string that contain an expression or an function to be called
+
+Validation declaration
+
+```coffeescript
+	@validation name, validator, message 		#general validation
+	@validatePresenceOf name 				#validate if the variable is undefined
+	@validateNumericalityOf name, [option] 	#validate if the variable is a number or between the range of option.minimum and option.maximum
+	@validateLengthOf name, [option] 		# validate if the variable has a length between option.minimum and option.maximum
+```
+
+name: string, should be name of a variable
+
+validator: a function that return a boolean value
+
+message: a string to be put on the user interface
+
+Callback declaration
+
+```coffeescript
+@preCall name, callback #execute before update
+@postCall name, callback #execute after update
+
+name: string, should be name of a variable
+
+callback: the function to be called
+
 
 
 
