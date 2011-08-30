@@ -65,9 +65,9 @@ Programmers can specify the html form elements that should be maintained by syst
 b.	Constraint:
 
 ```coffeescript 
-@relate (c) -> 
+	@relate (c) -> 
 		c.method relationship # unconditional method
-c.when(condition).method relationship # conditional method
+		c.when(condition).method relationship # conditional method
 ```
 
 Programmers can specify the relationships between variables by declaring constraints. Each constraint represent a relationship to be maintained, and should consist of one or more constraint satisfaction methods (CSM). It is programmer¡¦s responsibility to guarantee after executed one of these methods, the relationship will be satisfied. When the UI is running, our system will maintain the relationship by executing the most appropriate CSM for each constraint.
