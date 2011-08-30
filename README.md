@@ -2,7 +2,7 @@ This system is a JavaScript library designed for simplifying web-based user inte
 
 
 
-1. Installation.
+Installation.
 
 Please download jquery-1.6.js, jquery.tmpl.js, knockout-1.2.1.debug.js, argure.js from our github repository, and include them as script on your webpages.
 
@@ -16,7 +16,7 @@ For example,
 ```
 
 
-2. An introductory example.
+An introductory example.
 
 Form: 	
 
@@ -101,7 +101,7 @@ We also implement other components that provide more specific operation. Please 
 
 
 
-3. The constraint system
+The constraint system
 
 We use multi-way, single-output constraint system to maintain relationships between variables. 
 
@@ -114,7 +114,7 @@ To do this, we use a modified version of DeltaBlue algorithm as the constraint s
 You can find more details of our algorithm in Algorithm.pdf.
 
 
-4.	Reference
+Reference
 
 To learn more about our algorithm and system, you may want to check the following links.
 
