@@ -1,4 +1,4 @@
- This system is a JavaScript library designed for simplifying web-based user interface (UI) programming. We build this system on Knockout, also an open source JavaScript library, to simplify the connection of JavaScript variables and HTML form elements. The goal of this system is to provide a clean and easy-to-use interface for programmers to maintain complicated relationships between UI elements, and thus make UI programming easier.
+This system is a JavaScript library designed for simplifying web-based user interface (UI) programming. We build this system on Knockout, also an open source JavaScript library, to simplify the connection of JavaScript variables and HTML form elements. The goal of this system is to provide a clean and easy-to-use interface for programmers to maintain complicated relationships between UI elements, and thus make UI programming easier.
 
 1.	Installation.
 
@@ -65,9 +65,9 @@ Programmers can specify the html form elements that should be maintained by syst
 b.	Constraint:
 
 ```coffeescript 
-	@relate (c) -> 
-		c.method relationship # unconditional method
-		c.when(condition).method relationship # conditional method
+@relate (c) -> 
+c.method relationship # unconditional method
+c.when(condition).method relationship # conditional method
 ```
 
 Programmers can specify the relationships between variables by declaring constraints. Each constraint represent a relationship to be maintained, and should consist of one or more constraint satisfaction methods (CSM). It is programmer¡¦s responsibility to guarantee after executed one of these methods, the relationship will be satisfied. When the UI is running, our system will maintain the relationship by executing the most appropriate CSM for each constraint.
@@ -90,6 +90,7 @@ d.	Callback function:
 Programmers can specify additional actions when users change the value of a variable by specifying callback functions. Our system provides two types of callback functions, pre-callback functions that work before the automatic update of the system, and post-callback functions that work after the automatic update.
 
 e.	Other components:
+
 We also implement other components that provide more specific operation. Please check the appendix and examples for more details.
 
   In the following section, we will explain how our system works in more details.
@@ -114,13 +115,6 @@ To learn more about our algorithm and system, you may want to check the followin
 [CoffeeScript]( http://jashkenas.github.com/coffee-script/)
 
 [DeltaBlue Algorithm]( http://dl.acm.org/citation.cfm?id=77531)
-
-Appendix: Prototypes of all the components we implement in our system.
-
-Variables declaration
-```coffeescript
-	@variable name
-	@
 
 
 
