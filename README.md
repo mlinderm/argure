@@ -2,7 +2,7 @@ This system is a JavaScript library designed for simplifying web-based user inte
 
 
 
-1. Installation.
+Installation.
 
 Please download jquery-1.6.js, jquery.tmpl.js, knockout-1.2.1.debug.js, argure.js from our github repository, and include them as script on your webpages.
 
@@ -16,7 +16,7 @@ For example,
 ```
 
 
-2. An introductory example.
+An introductory example.
 
 Form: 	
 
@@ -101,7 +101,7 @@ In the following section, we will explain how our system works in more details.
 
 
 
-3. The constraint system
+The constraint system
 
 We use multi-way, single-output constraint system to maintain relationships between variables. 
 
@@ -114,7 +114,7 @@ To do this, we use a modified version of DeltaBlue algorithm as the constraint s
 You can find more details of our algorithm in Algorithm.pdf.
 
 
-4. Reference
+ Reference
 
 To learn more about our algorithm and system, you may want to check the following links.
 
@@ -125,14 +125,14 @@ To learn more about our algorithm and system, you may want to check the followin
 [DeltaBlue Algorithm]( http://dl.acm.org/citation.cfm?id=77531)
 
 
-5. Appendix: Prototypes of all the components in our system.
+Appendix: Prototypes of all the components in our system.
 
 **The parameter in [] in optional
 
 Variables declaration
 
 ```coffeescript
-	@observe name, [initial_value]	#declare a single variable
+	@observe name, [initial_value]			#declare a single variable
 	@collectionMultiSelect name, [initial_value]	#declare a variable for a multiple selection list
 ```
 
@@ -144,8 +144,8 @@ Constraint declaration
 
 ```coffeescript
 	@relate(c) ->
-		c.method csm #uncondition CSM
-		c.when(condition).method csm #conditional CSM
+		c.method csm			 #uncondition CSM
+		c.when(condition).method csm	 #conditional CSM
 ```
 
 csm: a string that contain an expression or an object that specify input, output and method directly
@@ -155,10 +155,10 @@ condition: a string that contain an expression or an function to be called
 Validation declaration
 
 ```coffeescript
-	@validation name, validator, message 		#general validation
-	@validatePresenceOf name 				#validate if the variable is undefined
-	@validateNumericalityOf name, [option] 	#validate if the variable is a number or between the range of option.minimum and option.maximum
-	@validateLengthOf name, [option] 		# validate if the variable has a length between option.minimum and option.maximum
+	@validation name, validator, message	#general validation
+	@validatePresenceOf name 		#validate if the variable is undefined
+	@validateNumericalityOf name, [option]	#validate if the variable is a number or between the range of option.minimum and option.maximum
+	@validateLengthOf name, [option]	# validate if the variable has a length between option.minimum and option.maximum
 ```
 
 name: string, should be name of a variable
@@ -170,9 +170,9 @@ message: a string to be put on the user interface
 Callback declaration
 
 ```coffeescript
-@preCall name, callback #execute before update
-@postCall name, callback #execute after update
-
+@preCall name, callback 		#execute before update
+@postCall name, callback 		#execute after update
+```
 name: string, should be name of a variable
 
 callback: the function to be called
